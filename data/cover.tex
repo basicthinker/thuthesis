@@ -25,7 +25,7 @@
 \csupervisor{郑纬民教授}
 % 如果没有副指导老师或者联合指导老师，把下面两行相应的删除即可。
 %\cassosupervisor{陈文光教授}
-%\ccosupervisor{某某某教授}
+%\ccosupervisor{武永卫教授}
 % 日期自动生成，如果你要自己写就直接改这个cdate。
 % 硕博也可以启用如下三行，替换其中的\the\year和\the\month为阿拉伯数字。
 \CTEXdigits{\zhyear}{2015}
@@ -53,40 +53,31 @@
 % 4. 专业型博士
 %    \edegree：“填写专业学位英文名称全称”
 %    \emajor：不填写此项
-\edegree{Doctor of Engineering}
+\edegree{Doctor of Philosophy}
 \emajor{Computer Science and Technology}
 \eauthor{Jinglei Ren}
 \esupervisor{Professor Weimin Zheng}
-%\eassosupervisor{Chen Wenguang}
-% 这个日期也会自动生成，你要改么？
+%\eassosupervisor{Professor Yongwei Wu}
 \edate{December, 2015}
 
 % 定义中英文摘要和关键字
 \begin{cabstract}
-  论文的摘要是对论文研究内容和成果的高度概括。摘要应对论文所研究的问题及其研究目
-  的进行描述，对研究方法和过程进行简单介绍，对研究成果和所得结论进行概括。摘要应
-  具有独立性和自明性，其内容应包含与论文全文同等量的主要信息。使读者即使不阅读全
-  文，通过摘要就能了解论文的总体内容和主要成果。
+    新型非易失性内存介质，诸如闪存（flash）、相变内存（phase-change
+memory，PCM）、可变电阻式内存（ReRAM）等，可提供传统硬盘等外部存储器的数据持久化能力，和日益接近动态随机访问存储器（DRAM）等内部存储器的存取性能。非易失性内存介质及其软硬件系统，可以融合传统易失性内部存储和持久化外部存储的优良特性，提升上层应用软件和系统整体的效能。
 
-  论文摘要的书写应力求精确、简明。切忌写成对论文书写内容进行提要的形式，尤其要避
-  免“第 1 章……；第 2 章……；……”这种或类似的陈述方式。
+    非易失性内存系统使得内存数据在系统故障断电后依然可以得到特定程度的保留。该特性在减少传统持久化机制带来的性能损耗方面作用显著，但于此同时，也使得数据一致性问题尤为突出。为保证数据一致性，往往需要对上层应用程序访问内存的接口加以限制。数据一致性机制及其应用程序接口方式，在非易失性内存系统性能、易用性及两者间的权衡等方面扮演者至关重要的角色。
 
-  本文介绍清华大学论文模板 \thuthesis{} 的使用方法。本模板符合学校的本科、硕士、
-  博士论文格式要求。
+    本论文系统研究了在非易失性内存系统使用文件系统、事务性内存和软件透明三种主要访存接口方式的情况下，数据一致性的保护机制，以及针对特定负载的系统性能优化策略。研究成果的主要创新点包括：
 
-  本文的创新点主要有：
   \begin{itemize}
-    \item 用例子来解释模板的使用方法；
-    \item 用废话来填充无关紧要的部分；
-    \item 一边学习摸索一边编写新代码。
+    \item 将原子性事务（atomic transaction）机制引入操作系统页缓存，使得内存数据持久化时能够保证一致性；将该项技术用于手机文件系统，依据不同应用和用户的I/O特性，提出了优化手机能耗和应用响应的新度量和新模型。
+    \item 。
+    \item 。
   \end{itemize}
 
-  关键词是为了文献标引工作、用以表示全文主要内容信息的单词或术语。关键词不超过 5
-  个，每个关键词中间用分号分隔。（模板作者注：关键词分隔符不用考虑，模板会自动处
-  理。英文关键词同理。）
 \end{cabstract}
 
-\ckeywords{\TeX, \LaTeX, CJK, 模板, 论文}
+\ckeywords{内存, 非易失性, 持久化, 事务内存, 检查点}
 
 \begin{eabstract}
    An abstract of a dissertation is a summary and extraction of research work
@@ -108,4 +99,6 @@
    words, with semi-colons used in between to separate one another.
 \end{eabstract}
 
-\ekeywords{\TeX, \LaTeX, CJK, template, thesis}
+\ekeywords{memory, persistence, non-volatility, transactional memory,
+checkpointing}
+
