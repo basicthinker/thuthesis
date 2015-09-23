@@ -4,7 +4,7 @@
 %%% End:
 \secretlevel{公开}
 
-\ctitle{非易失性内存系统的\\数据一致性机制和性能优化}
+\ctitle{非易失性内存系统的\\数据一致性机制和性能优化研究}
 % 根据自己的情况选，不用这样复杂
 \makeatletter
 \ifthu@bachelor\relax\else
@@ -37,7 +37,7 @@
 % \cseconddiscipline{系统结构}
 % \postdoctordate{2009年7月——2011年7月}
 
-\etitle{Consistent and Efficient\\Persistence Mechanisms of\\Non-volatile Memory Systems}
+\etitle{Consistent and Efficient\\Persistence Mechanisms for\\Non-volatile Memory Systems}
 % 这块比较复杂，需要分情况讨论：
 % 1. 学术型硕士
 %    \edegree：必须为Master of Arts或Master of Science（注意大小写）
@@ -63,16 +63,16 @@
 % 定义中英文摘要和关键字
 \begin{cabstract}
     新型非易失性内存介质，诸如闪存（flash）、相变内存（phase-change
-memory，PCM）、可变电阻式内存（ReRAM）等，可提供传统硬盘等外部存储器的数据持久化能力，和日益接近动态随机访问存储器（DRAM）等内部存储器的存取性能。非易失性内存介质及其软硬件系统，可以融合传统易失性内部存储和持久化外部存储的优良特性，提升上层应用软件和系统整体的效能。
+memory，PCM）、可变电阻式内存（ReRAM）等，可提供传统硬盘等外部存储器的数据持久化能力，和日益接近动态随机访问存储器（DRAM）等内部存储器的存取性能。非易失性内存介质及其软硬件系统，可以融合传统易失性内部存储和持久化外部存储的优良特性，提升上层应用软件和系统整体的性能和效能。
 
-    非易失性内存系统使得内存数据在系统故障断电后依然可以得到特定程度的保留。该特性在减少传统持久化机制带来的性能损耗方面作用显著，但于此同时，也使得数据一致性问题尤为突出。为保证数据一致性，往往需要对上层应用程序访问内存的接口加以限制。数据一致性机制及其应用程序接口方式，在非易失性内存系统性能、易用性及两者间的权衡等方面扮演者至关重要的角色。
+    非易失性内存系统使得内存数据在系统故障断电后依然得以保留。该特性在减少传统持久化机制带来的性能损耗方面作用显著，但于此同时，也使得数据一致性问题尤为突出。为保证数据一致性，往往需要对上层应用程序访问内存的接口加以限制。数据一致性机制及其应用程序接口方式，在非易失性内存系统性能、易用性及两者间的权衡等方面扮演者至关重要的角色。
 
     本论文系统研究了在非易失性内存系统使用文件系统、事务性内存和软件透明三种主要访存接口方式的情况下，数据一致性的保护机制，以及针对特定负载的系统性能优化策略。研究成果的主要创新点包括：
 
   \begin{itemize}
-    \item 将原子性事务（atomic transaction）机制引入操作系统页缓存，使得内存数据持久化时能够保证一致性；将该项技术用于手机文件系统，依据不同应用和用户的I/O特性，提出了优化手机能耗和应用响应的新度量和新模型。
-    \item 。
-    \item 。
+    \item 将原子性事务（atomic transaction）机制引入操作系统页缓存，使得内存数据持久化时能够保证一致性；将该项技术用于手机文件系统，依据不同应用和用户的I/O特性，提出了优化手机能耗和应用响应的新度量和三组新算法。
+    \item 根据NVM Express接口和固态硬盘的新特性，为事务性内存设计了高效的持久化机制；该机制包含小缓冲器组（small buffer array）的设计，显著降低组提交（group commit）中提交者相互等待的时间，可同时获得理想的吞吐量和延迟；同时采用基于快照（snapshot）的并发控制，针对当今日益普遍的读写混合的工作负载，进一步隐藏写延迟对只读事务的影响。
+    \item 为支持软件透明的内存数据一致性，设计了高效的合作式检查点技术；该技术同时在缓存块粒度和页粒度上产生检查点，可使软件执行与产生检查点的延迟重合，大幅减少停滞时间，同时实现可行的硬件空间占用。
   \end{itemize}
 
 \end{cabstract}
@@ -80,25 +80,24 @@ memory，PCM）、可变电阻式内存（ReRAM）等，可提供传统硬盘等
 \ckeywords{内存, 非易失性, 持久化, 事务内存, 检查点}
 
 \begin{eabstract}
-   An abstract of a dissertation is a summary and extraction of research work
-   and contributions. Included in an abstract should be description of research
-   topic and research objective, brief introduction to methodology and research
-   process, and summarization of conclusion and contributions of the
-   research. An abstract should be characterized by independence and clarity and
-   carry identical information with the dissertation. It should be such that the
-   general idea and major contributions of the dissertation are conveyed without
-   reading the dissertation.
 
-   An abstract should be concise and to the point. It is a misunderstanding to
-   make an abstract an outline of the dissertation and words ``the first
-   chapter'', ``the second chapter'' and the like should be avoided in the
-   abstract.
+Non-volatile memories (NVMs), such as flash, phase-change memory (PCM) and ReRAM, feature both the persistence property of external storage and the high performance of internal memory. They promise an emerging tier in the memory and storage stack.
 
-   Key words are terms used in a dissertation for indexing, reflecting core
-   information of the dissertation. An abstract may contain a maximum of 5 key
-   words, with semi-colons used in between to separate one another.
+Non-volatile memory systems ensure durability of memory data on system failures such as power outages and system crashes. This distinctive feature of NVM systems can reduce the overhead of traditional data persistence mechanisms, but introduces the critical challenge of supporting crash consistency of memory data. In order to guarantee such consistency, programs are typically limited in accessing memory data by a certain form of access interfaces. The interface choice and its corresponding consistency mechanism determine the tradeoff between programming ease and system performance.
+
+This dissertation researches efficient consistency mechanisms and/or system performance optimizations for NVM systems, under three main forms of interfaces, file system, transactional memory, and the software-transparent. The main contributions of this dissertation include the following.
+
+\begin{itemize}
+\item For file systems, we introduce atomic transactions to the page cache of operating systems to ensure that memory data is flushed to persistent storage in a consistent manner. This technique is applied to smartphones whose DRAM can be assumed as a NVM system, in order to optimize energy efficiency and app responsiveness. We design app-adaptive policies and algorithms to quantatively trade off between data staleness and energy efficiency/app responsiveness.
+
+\item For transactional memories, we propose a new buffering and group commit design, the small buffer array, according to the characteristics of (potentially NVRAM-enhanced) NVM Express-attached flash cards. It largely reduces the waiting latency in group commit, while saturating the bandwidth of the flash cards. Moreover, we employ snapshot isolation to hide write latency from the critical path of read-only transactions, which brings significant performance improvement to real-time analytical workloads.
+
+\item With software-transparent interfaces, programs can safely access memory data using regular load/store instructions. Programmers do not need bother partitioning transient and persistent data or writing transactional code, and enjoy better portability than using particular transaction libraries. To enable this approach, we propose a highly efficient consistent cooperative checkpointing mechanism which synchronously checkpoints memory data at different granularities.
+
+\end{itemize}
+
 \end{eabstract}
 
-\ekeywords{memory, persistence, non-volatility, transactional memory,
+\ekeywords{memory, persistence, non-volatile, transactional memory,
 checkpointing}
 
