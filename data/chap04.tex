@@ -60,13 +60,29 @@ CPU缓存在块粒度上（典型配置为64字节）管理数据；操作系统
 
 \section{双模式检查点生成技术}
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\columnwidth]{arch}
+\caption{THNVM的总体架构图}
+\label{fig-arch}
+\end{figure}
+
+THNVM采用DRAM和NVM的混合架构，基于硬件实现，提供软件透明的故障时数据一致性保障。THNVM以透明于应用程序的方式保障所有内存数据在故障时的一致性。为了利用在不同粒度持久化数据带来的不同特性，我们提出了一种新的双模式检查点生成机制。它可以同时在两个粒度上生成内存数据的检查点：分散的写在缓存块粒度上生成检查点，使用块重映射模式（第\ref{subsec:block-remap}节）；集中的写在页粒度上生成检查点，使用页回写模式（第\ref{subsec:page-writeback}节）。
+
+另外，我们提出了两种机制来协调双模式检查点生成（第\ref{subsec:coordination}节）。第一，我们允许相对较快的块重映射模式来暂时接管原本应该由较慢的页回写模式处理的写。这样做可以显著减少检查点生成阻塞程序执行的时间。第二，我们定期地依据程序执行时访问内存的特点在两种模式之间迁移数据页。这样做可以有效保证检查点生成模式和其处理的写的行为相匹配。
+
+图\ref{fig-arch}绘制了THNVM架构总览。DRAM和NVM部署在内存总线上，并映射到同一个物理内存地址空间中。该地址空间暴露给操作系统。我们更改了内存控制器，增加了两个用于维护内存访问元数据的地址转换表，以及一个检查点生成控制器。
+
 \subsection{系统定义}
 
 \subsection{基于块重映射的检查点生成}
+\label{subsec:block-remap}
 
 \subsection{基于页回写的检查点生成}
+\label{subsec:page-writeback}
 
 \subsection{双重检查点生成机制}
+\label{subsec:coordination}
 
 \section{一致性机制的状态机表达}
 
