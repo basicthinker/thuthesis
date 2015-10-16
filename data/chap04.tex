@@ -19,8 +19,8 @@ THNVM的设计有三个本质特性：软件透明，检查点生成，以及双
 
 \subsection{软件一致性保障技术的缺陷}
 
-\begin{figure}[t]
-\centering \includegraphics[width=\columnwidth]{motivation-code}
+\begin{figure}[!h]
+\centering \includegraphics[width=\textwidth]{motivation-code}
   \caption{实例代码：向持久化的哈希表中插入一个项。分别采用（a）传统的软件接口或（b）软件透明的THNVM。}
 \label{fig:motivation-code}
 \end{figure}
@@ -60,10 +60,10 @@ CPU缓存在块粒度上（典型配置为64字节）管理数据；操作系统
 
 \section{双模式检查点生成技术}
 
-\begin{figure}[t]
+\begin{figure}[!h]
 \centering
-\includegraphics[width=0.8\columnwidth]{arch}
-\caption{THNVM的总体架构图}
+\includegraphics[width=\textwidth]{arch}
+\caption{THNVM的总体架构图。}
 \label{fig-arch}
 \end{figure}
 
@@ -77,13 +77,13 @@ THNVM采用DRAM和NVM的混合架构，基于硬件实现，提供软件透明�
 
 \textbf{失效模型}：THNVM允许软件应用在诸如系统死机、掉电等故障发生后，从一个一致的内存数据检查点开始，继续CPU执行。为此，我们需要定期将内存中的数据的更新和CPU状态生成检查点，这其中包括CPU寄存器、写缓冲、脏缓存块以及内存控制器的写队列。我们的检查点生成机制保护内存数据和CPU状态的一致性不因系统故障而被污染。
 
-\begin{figure}[t]
+\begin{figure}[!h]
 \centering
-\includegraphics[width=0.9\columnwidth]{epoch-before}\\
+\includegraphics[width=\textwidth]{epoch-before}\\
 {\small (a) 采用检查点生成时暂停全系统的时间单元模型}
-\includegraphics[width=0.9\columnwidth]{epoch-after}\\
+\includegraphics[width=\textwidth]{epoch-after}\\
 {\small (b) THNVM采用的时间单元模型，可将检查点生成和程序执行相互重叠。该模型维护三个版本的数据：活跃的工作数据（$W_{active}$）、最近检查点数据（$C_{last}$），和次近检查点数据（$C_{penult}$）。\hfill}
-\caption{检查点生成系统的时间单元模型}
+\caption{检查点生成系统的时间单元模型。}
 \label{fig-epoch}
 \end{figure}
 
@@ -121,26 +121,210 @@ THNVM对空间局部性低的数据更新使用块重映射模式进行管理。
 \section{一致性机制的正确性证明}
 
 \section{系统实现}
+\label{sec:implementation}
+
+本节描述内存地址空间管理和THNVM引入的硬件更改。我们也给出了THNVM操作读、写和检查点的实例，以及恢复由THNVM维护的数据的步骤。
 
 \subsection{地址空间管理}
 
+THNVM地址空间管理的目标包括（1）在不同的内存位置存放数据的多个版本，以及（2）提供一个有效的一致的数据版本给操作系统。
+
+\textbf{DRAM和NVM中的数据区域：}为了实现第一个目标，我们在DRAM和NVM中维护三个数据区域，每个保存一个数据版本：$W_{active}$、$C_{last}$或者 $C_{penult}$。如图\ref{fig-addr-space}所示，这些区域包括一个DRAM中的工作数据区和两个NVM中的检查点数据区。该工作数据区主要保存由页回写模式管理的活跃工作数据$W^{page}_{active}$，同时在上一个时间单元仍在生成检查点$C_{last}$时，用于缓冲由块重映射模式管理的活跃数据副本$W^{block}_{active}$。检查点区域A和B以交错的方式保存检查点数据$C_{last}$和$C_{penult}$：如果$C_{last}$保存在检查点区域A，我们就把$C_{penult}$写入检查点区域B；反之亦然。另外，如果上一个时间单元已经完成检查点生成，我们以与$C_{last}$交错的方式直接将$W^{block}_{active}$写入检查点区域（即用$W^{block}_{active}$覆写$C_{penult}$如果全内存$C_{last}$已经完整生成）。内存数据的大部分在三个连续时间单元（活跃、上一个和倒数第二个）都不会被更改，这些数据会位于检查点区域B，所以该区域也被称作家区域。另外，我们在检查点区域A开辟专门的内存区域来保存CPU寄存器的检查点。 
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\textwidth]{addr-space}
+\caption{THNVM的地址空间布局}
+\label{fig-addr-space}
+\end{figure}
+
+\textbf{物理地址空间到硬件地址空间的映射}。为了实现第二个目标，THNVM创建两个地址空间之间的映射关系。硬件地址空间由内存控制器管理，是DRAM和NVM实际的设备地址空间，仅对内存控制器可见。物理地址空间由操作系统管理，是对内存控制器对外提供的内存空间的逻辑视图，实际上包含硬件地址空间里数据的一个子集。我们定义\emph{可见数据}为在当前活跃时间单元内被更新的工作副本或者最近的检查点，即： 
+\[
+\begin{cases}
+        W_{active}, & \text{如果}W_{active}\text{存在}\\
+        C_{last}, & \text{如果}W_{active}\text{不存在}
+\end{cases}
+\]
+在数据恢复的时候，我们复原如下的可见数据： 
+\[
+\begin{cases}
+        C_{last}, & \text{如果上一个检查点生成完毕}\\
+        C_{penult}, & \text{如果上一个检查点未完整保存}
+\end{cases}
+\]
+我们设计物理地址空间的大小等于硬件地址空间中家区域的大小；也就是说，如果一个数据块或页保存在家区域中，那么它的物理地址等于它的硬件地址。任何没有在BTT/PTT中的数据块/页的可见数据都位于家区域中。
+
 \subsection{元数据管理}
 
-\subsection{数据保存}
+保存在BTT和PTT中的元数据为内存控制器提供必需的信息，以完成如下三个目标：（1）将处理器发出的每个内存请求的物理地址转换成硬件地址；（2）将生成检查点的NVM写指向正确的硬件地址；（3）确定何时在两个检查点生成模式之间迁移数据。THNVM在两个地址转换表BTT和PTT中维护元数据。连个表都包含四个列（图\ref{fig:metadata}），包含一个物理地址高位的块/页索引（BTT需要42比特，PTT需要36比特）、一个2比特的版本ID、一个2比特的可见内存区域ID、一个1比特的检查点内存区域ID和6比特的表征空间局部性的写计数器。 
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\textwidth]{metadata}
+\caption{BTT和PTT表项的各个列。}
+\label{fig:metadata}
+\end{figure}
+
+为了达到第一个目标，必要的信息包括：（a）一个请求应当指向的内存区域，以及（b）在该内存区域内物理地址到硬件地址的映射。处理器只能够访问可见数据，所以我们用可见内存区域ID确定对应可见数据所处的内存区域。为了获得硬件地址，我们确保每个表项到表首的偏移数等于相应内存区域中块或页与首块或首页的偏移数（不适用于家区域）。所以，我们可以使用表项的偏移计算出块或页在内存区域中的硬件地址。 
+
+为了达到第二个目标，内存控制器使用检查点内存区域ID来确定一个检查点写的目的内存区域。我们采用和上文相同的方法，通过表项的偏移数来确定硬件地址。 
+
+为了达到第三个目标，内存控制器依据BTT和PTT 的写计数来确定数据的空间局部性。BTT/PTT中的每个写计数器记录了上一个时间单元中对相应物理块/页的写操作的数据；内存控制器在每个时间单元开始时读取并重置写计数器。一个时间单元内对同一个物理页较大数量的写操作（超过预定义的阈值）意味着这个页有较高的空间局部性和写强度。为此，我们下一个时间单元即采用页回写机制来操作对该页的写。写计数器的值如果小于预定义的阈值，表明我们下一个时间单元内应采用块重映射机制。我们实验了不同的阈值，发现从块重映射切换到页回写以及相反切换的阈值分别取22和16时最为有效。
+ 
+\textbf{生成BTT和PTT的检查点：}元数据定位最近的一致的检查点，所以需要在系统故障前后保持持久化。在每个检查点生成阶段，我们在NVM的BTT和PTT备份区域生成BTT和PTT表项的检查点。有一个挑战在于原子性地将BTT/PTT写入NVM。我们使用一个表征BTT/PTT检查点生成是否完成的比特位来维护备份操作的原子性。 
+
+\textbf{BTT和PTT的大小：}BTT表项的数目取决于工作集合的写强度，而PTT表项的数目由DRAM的大小决定。如果有些负载要求GB级的DRAM，巨大的PTT存储代价可以通过虚拟化PTT得到缓解，即在DRAM存储PTT而在内存控制器中缓存部分热点表项~\cite{Meza2012, Yoon2010, Burcea2008}。如图~\ref{fig:addr-space}所示，我们对不同表长度下的系统性能进行了敏感度测试。另外，当前以及正在发生的硬件创新使得内存控制器可以拥有复杂的功能，例如，HMC~\cite{HMC:2011}的逻辑层，或者HP的The Machine~\cite{TheMachine:2015}的媒介控制器。这些技术让我们的硬件开销变得可行。
+
+\subsection{服务读写请求}
+
+
+
+\subsection{数据冲刷}
+
+为了保证检查点的一致性，在每个时间单元的生成检查点阶段，我们需要将处理器中的数据冲刷到NVM。为此，我们在每个检查点生成阶段的起始，将处理器寄存器保存到NVM，并且冲刷写缓冲和脏数据块；我们还需要在每个检查点生成阶段结束时，在NVM写队列中插入一个分界。 
+我们采用基于硬件的机制来执行数据冲刷。内存控制器在一个执行阶段结束时，通过我们添加的信号路径通知CPU。在收到通知后，CPU发出一个冲刷指令将所有内存器的值写入一个NVM上的特别区域，并将写缓存及脏缓存块写入内存控制器。注意我们并不使缓存中的脏数据块失效，类似于Intel的CLWB操作，从而后续的时间单元可以继续访问这些脏数据块。
 
 \subsection{数据恢复}
 
 \section{系统测评}
 
-\subsection{实验设置}
+\subsection{实验环境}
 
-\subsection{微基准测试}
+本节描述我们使用的模拟器、处理器和内存配置，以及基准测试集。我们的实验基于周期精准的模拟器gem5~\cite{Binkert:2011:GS:2024716.2024718}。我们使用gem5的提供详细时间模型的处理器，并扩展原有经典内存模型~\cite{6844484}。表\ref{table:config}列举了我们模拟用处理器和内存的架构配置和主要详细参数。我们的DRAM和NVM都是采用DDR3接口进行模拟。我们模拟了16~MB的DRAM，以及分别2048个BTT和PTT表项。我们更改了gem5的实现来加入在第\ref{sec:implementation}节描述的THNVM的各项机制。每个时间单元的长度被限制在10~ms（与论文~\cite{1003567, 1003568}的配置相近），因为用户或系统软件总是希望系统故障时的数据损失最小。 
 
-\subsection{存储类基准测试}
+\begin{table}[!h]
+\centering
+\caption{系统配置及参数~\cite{Lee:2009:APC:1555754.1555758}。}
+\label{table:config}
+\begin{tabular}{l|l}
+\toprule[1.5pt]
+处理器 & $3~GHz$，按序执行 \\
+\hline
+L1指令/数据缓存 & 私有$32~KB$，$8$路，$64~B$块；$4$周期命中延迟 \\
+L2缓存 & 私有$256~KB$，$8$路，$64~B$块；$12$周期命中延迟 \\
+L3缓存 & 共享$2~MB$每核，$16$路，$64~B$块；$28$周期命中延迟 \\
+\hline
+内存 & DDR3-1600，$64$位内存通道，$2$ ranks，$8$ banks，$8~KB$行缓存 \\
+时间参数 & DRAM：$40$ ($80$)纳秒行命中（错失）延迟 \\
+               & NVM：$40$ ($128$/$368$)纳秒行命中（clean/dirty miss）延迟 \\
+               & BTT/PTT：$3$纳秒查找延迟 \\
+\toprule[1.5pt]
+\end{tabular}
+\end{table}
 
-\subsection{计算类基准测试}
+\textbf{参评系统}。我们比较THNVM和如下四个不同的系统。
+\begin{enumerate}
+\item 理想化的DRAM系统：一个只有DRAM作为主存的系统，并假设不需要任何代价即可实现数据一致性。DRAM的大小等于THNVM的物理地址空间大小。 
+\item 理想化的NVM系统：一个只有NVM作为主存的系统，并假设不需要任何代价即可实现数据一致性。NVM的大小等于THNVM的物理地址空间大小。 
+\item 日志系统：一个混合的NVM系统，使用日志~\cite{DeWitt:1984:ITM:602259.602261, Hagmann:1987:RCF:41457.37518,
+ext4}来保证数据的一致性。我们的实现遵照~\cite{Remzi:Journaling}。DRAM中设置一个日志缓冲来收集和归并更新的数据块。每个时间单元结束时，缓冲数据被回写到NVM的备份区域，然后再在原目标地址更新数据。该机制使用一个表来追踪DRAM中被缓冲的脏数据块。这个表的长度与THNVM中BTT和PTT两个表的长队和相同。 
+\item 影子页系统：一个混合的NVM，使用影子页机制~\cite{bernstein2009principles}来保证数据一致性。该机制对NVM实行写时拷贝，并在DRAM中保存这些页作为缓冲。当DRAM缓冲被填满时，脏页被写入NVM，但不会覆盖原目标地址的数据。该配置中DRAM的大小和THNVM中的DRAM大小一样。
+\end{enumerate}
+ 
+\textbf{基准测试集}。我们评测了三组不同的负载。
 
+\begin{enumerate}
+\item 微基准测试集涵盖不同的内存访问模式。为了显示我们一致性机制对不用访问模式的适应性，我们评测了三组代表典型访问模式的微基准测试集。（i）随机：随机访问一个大数组。（ii）流式：顺序访问一个大数组。（iii）滑动：在大数组上虚拟一个工作数据集并滑动。每一步，随机访问数组中的一段特定区域，然后转移到另一个区域。上述每个负载都包含1:1的读写操作数目。
+\item 面向存储的内存中基准测试集。持久性内存可通过将传统存储的数据纺织在内存来优化基于磁盘存储的应用。为了评测THNVM对此类应用的影响，我们运行了两个基准测试集（类似于~\cite{Coburn:2011:NMP:1950365.1950380, Zhao:2013:KCP:2540708.2540744}）。它们包含代表典型内存存储的键值存储的实现，分别在哈希表和红黑树的内存数据结构上执行查找、插入和删除等操作。 
+\item SPEC CPU 2006。 因为THNVM为支持多种类型的遗留代码设计，所以我们也评测了SPEC基准测试集。承担此类负载的进程因为可以假定一个可持久化的有一致性保障的地址空间而获益。我们从SPEC套件中选择了8个内存访问最集中的应用，每个应用执行10亿条指令。对于其他内存访问不太集中的应用，THNVM的影响可以忽略不计，几乎等同于提供零代价一致性保证的全DRAM理想系统。 
+\end{enumerate}
+
+\subsection{微基准测试集}
+
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=\textwidth]{time}
+  \caption{微基准测试集执行时间。}
+  \label{fig:micro-time}
+\end{figure}
+
+\textbf{整体性能：}图~\ref{fig:micro-time}展示了各参测系统与零代价一致性的全DRAM理想系统的程序运行时间比。通过这些结果，我们可以得出三点观察。第一，THNVM的性能在微基准测试集的所有访问模式下均优于其他一致性机制。我们的性能平均比日志和影子页技术分别高10.2\%和14.8\%。第二，与以前一致性机制不同，THNVM可以灵活地适应不同的访问模式。例如，影子页机制在随即访问的模式下性能非常糟糕，因为即使内存中一个页只有很少的脏块，整个页都需要在生成检查点时写入NVM。另一方面，影子页在其他两类访问模式下表现要好于日志机制，因为这些负载下有大量的顺序写被DRAM吸收，减小了检查点生成的代价。然而，THNVM可以适应不同的访问模式，没有任何表现不良的情况。第三，THNVM的平均性能损失可以限制在理想DRAM系统的14.3\%，整体性能比理想NVM系统高出5.9\%。
+
+总结来看，我们可以得出两个结论：
+\begin{enumerate}
+\item THNVM可以灵活地适应不同的访问模式，其性能在所有微基准测试中高于传统日志或影子页一致性机制。 
+\item THNVM引入了可以接受的较小的性能损耗以达成数据一致性保障，其性能和零代价一致性的理想系统相差无几。
+\end{enumerate}
+
+\textbf{NVM写入量}。图~\ref{fig:micro-bw}展示了各参评系统在不同负载下的NVM写入数据的总量。我们分析了三个组件：（1）最后一级缓存的回写，代表CPU向NVM输出的数据量；（2）检查点生成带来的NVM数据写入量；（3）页迁移带来的NVM数据写入量。我们可以得到关于数据传输的三点观察。
+\begin{enumerate}
+\item 日志和影子页无法自适应于不同的访问模式，导致在至少一种负载下的巨大的NVM传输量。相比之下，THNVM在任意负载下都没有显示极端的NVM传输量。平均来看，THNVM的NVM写入量，相比日志和影子页，分别降低了10.8\%和14.4\%。
+\item 虽然平均来看，THNVM虽然减少了对所有访问模式平均的NVM写入量，它比单个访问模式下拥有最低NVM写入量的一致性机制会传输更多的数据。这个原因主要在于THNVM将检查点生成和程序执行重叠，需要存储更多的数据版本，有些情况下需要为检查点生成更多的数据。所以，在一致性机制中有一个性能和带宽之间的清晰的折衷。
+\item 我们发现，对于不同的访问模式，THNVM的页迁移可能产生不同的NVM写入量。例如，流式访问模式下，页不断地从NVM迁移到DRAM再被写回NVM而没有实质上的数据归并，所以产生的NVM写入量很大。与之相反，在滑动窗口访问模式下，因为工作数据集缓慢移动，许多页在被迁移回NVM前可以得到多次重复使用。 
+\end{enumerate}
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=0.8\textwidth]{rand-bw}\\
+\includegraphics[width=0.8\textwidth]{strm-bw}\\
+\includegraphics[width=0.8\textwidth]{slid-bw}\\
+\caption{各个主存系统在微基准测试集上产生的NVM写入量和检查点生成延迟（\%）。``CPU''表示从CPU直接写入NVM的数据量，``Checkpoint''代表生成检查点写入NVM的数据量，``Migration''代表页迁移时写入NVM的数据量。}
+\label{fig:micro-bw}
+\end{figure}
+
+总结起来，我们得出如下两个结论。
+\begin{enumerate}
+\item THNVM对不同访问模式的适应性减少了各个访问模式下平均的NVM写入量。 
+\item 通过将检查点生成和程序执行重合，THNVM可以减少程序执行时间，但对于特定的单一类型的负载，可能会引入比对应的最优传统一致性机制更多的NVM写入量。
+\end{enumerate}
+
+\textbf{检查点生成延迟}。图~\ref{fig:micro-bw}同时展现了每个负载在检查点生成上花费了多大比例的运行时间。日志和影子页分别花费了平均18.9\%和15.2\%的时间用于生成检查点，而THNVM将该比例降低到平均2.5\%。我们可以得出结论，THNVM可以通过将检查点生成和程序执行重合有效地避免给应用带来的停滞时间。 
+
+\subsection{面向存储的基准测试集}
+
+内存存储应用通常访问数据结构的随机位置，连续的写较少。我们通过面向存储的基准测试集获得的实验结果，反映了THNVM在真实负载情况下的表现。
+
+\textbf{吞吐率性能：}图~\ref{fig:rb-thr}展示了我们各个内存存储负载的事务吞吐率。图中，我们将发向两个键值存储的请求的大小由16B变化到4KB。我们从该图可以做出两个观察。
+\begin{enumerate}
+\item THNVM的吞吐率总是好于传统一致性机制。总体上，THNVM在哈希表和红黑树上实现了比日志机制分别高8.8\%和4.3\%的吞吐率，以及比影子页高29.9\%和43.1\%的吞吐率。
+\item THNVM实现了和理想化DRAM系统接近的吞吐率，以及和理想化NVM系统相似的吞吐率。THNVM在哈希表和红黑树上的平均吞吐率分别是理想化DRAM系统的95.1\%和96.2\%。
+\end{enumerate}
+
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=\textwidth]{ht-thr}\\
+  \includegraphics[width=\textwidth]{rb-thr}\\
+  \caption{哈希表和红黑树的事务吞吐率。}
+  \label{fig:rb-thr}
+\end{figure}
+
+总结起来，THNVM在实际的内存存储负载下，比传统一致性机制性能更优，而且相对理想化的DRAM/NVM系统造成的吞吐率降低很小。 
+
+\textbf{内存带宽消耗：}图~\ref{fig:rb-bw}展示了我们内存存储负载在不同请求大小情况下的带宽消耗。通过该图我们可以得出两个观察。
+\begin{enumerate}
+\item THNVM总比影子页机制占用更少的带宽，因为这些负载展现出随机写的行为。这种情况下，影子页机制由于需要写回只有少数脏数据块的页，生成检查点的带宽会增加。THNVM在哈希表和红黑树上的带宽消耗分别比影子页机制减少43.4\%和64.2\%。
+\item THNVM在这些负载下，会比日志机制带来更多的带宽消耗。原因是THNVM需要为了将检查点生成和程序执行重叠而维护更多的数据版本。这个结果符合我们之前关于带宽消耗和性能之间折衷的观察。日志机制在哈希表和红黑树的负载下，分别比THNVM减少19.0\%和14.0\%的NVM写入带宽。
+\end{enumerate}
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\textwidth]{ht-bw}\\
+\includegraphics[width=\textwidth]{rb-bw}\\
+\caption{哈希表和红黑树的写带宽消耗。``理想化DRAM''对应DRAM的写入带宽，其余对应NVM写入带宽。}
+\label{fig:rb-bw}
+\end{figure}
+
+我们可以看到，THNVM的写带宽消耗接近日志机制，而远小于影子页机制。
+
+\subsection{面向计算的基准测试集}
+
+图\ref{fig:cpu-ipc}显示内存使用集中的SPEC CPU基准测试集负载的IPC。这些数据根据理想化的DRAM系统进行了统一化。从图中我们可以做出两点观察。第一，THNVM相对于理想化的DRAM系统减缓基准测试集执行3.4\%。第二，THNVM相对于理想化的NVM系统平均加速基准测试集2.7\%。总结起来，THNVM可以显著减少检查点生成的性能损耗，提供和零代价一致性系统相近的性能。
+ 
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=\textwidth]{cpu-ipc}
+  \caption{SPEC 2006基准测试集的IPC（数值经过统一化）。}
+  \label{fig:cpu-ipc}
+\end{figure}
+ 
 \subsection{敏感度分析}
 
-\section{本章小结}
+图\ref{fig:sens-att-len}展示了THNVM在运行基于哈希表的内存存储负载时，对于BTT表项数目的敏感度。我们可以从图中得到两点结论。第一，基本上BTT越大，NVM写入量越小，因为减小的检查点生成次数相应减小了到NVM的写。第二，基本上BTT越大，负载吞吐率越高。这是因为较高的内存带宽消耗和较小的BTT组合在一起时，会阻塞内存带宽，导致服务内存请求的延迟。
+
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=\textwidth]{sens-att-len}
+  \caption{在面向存储基准测试集的负载下变化BTT表长度。}
+  \label{fig:sens-att-len}
+\end{figure}
 
