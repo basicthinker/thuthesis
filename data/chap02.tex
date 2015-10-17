@@ -25,7 +25,7 @@ Nguyen:2013:SSE:2493432.2493505, 6986137}依然沿用了这种传统设计思路
 为了量化地实现策略权衡，我们将“持久性”解释为一个连续变量，而不是一个二元值（“持久”或“不持久”）。直观上看，给定系统故障的概率，闪存上数据的滞后程度越小，我们可以认为总体数据的持久性越高。所以，我们使用数据滞后量作为“持久性”的一个度量。另外，我们的权衡策略还依赖于持久性和一致性在存储系统上的分离。最近的若干工作~\cite{Chidambaram:2013:OCC:2517349.2522726,
 Mickens:2014:BFC:2616448.2616473}在不同领域利用了相似的分离手段，但它们没有使用以内存为中心的设计，也没有为手机应用设计优化策略——我们目前缺乏针对手机环境的系统的量化的研究。
 
-我们基于非易失性内存假设的系统设计，主要的优势在于赋予存储系统可以针对应用和用户行为进行动态优化的自由。传统阻塞等待的fsync()和时间间隔固定的冲刷机制都无法做到这一点，不能很好地支持对移动系统能耗和用户体验的优化。我们的观察带来了针对应用和用户的自适应的检查点生成算法。具体来说，我们回答了对哪些数据生成检查点（即写出到闪存）和何时生成检查点这两个问题。我们的方案会考虑设备状态和用户交互，对每个应用独立地确定生成检查点的最佳时机。
+我们基于非易失性内存假设的系统设计，主要的优势在于赋予存储系统可以针对应用和用户行为进行动态优化的自由。传统阻塞等待的\texttt{fsync}系统调用和时间间隔固定的冲刷机制都无法做到这一点，不能很好地支持对移动系统能耗和用户体验的优化。我们的观察带来了针对应用和用户的自适应的检查点生成算法。具体来说，我们回答了对哪些数据生成检查点（即写出到闪存）和何时生成检查点这两个问题。我们的方案会考虑设备状态和用户交互，对每个应用独立地确定生成检查点的最佳时机。
 
 另一方面，非易失性内存的假设之所以能够成立，是因为以手机为代表的移动系统呈现出有利的特性。首先，手机设备是由电池自主供给能量的，所以由外部因素（如桌面和服务器系统面临的断电）导致DRAM数据丢失的风险大大降低；其次，当前手机平台由于软件系统故障死机的概率很小，只有6\%的随机调查用户遇到每个月一次以上的死机；第三，大部分手机应用都是联网的，因此本地丢失的用户数据可以从远程服务器同步找回（例如Gmail、Facebook、Twitter）。我们调研的在谷歌应用商店最为流行的62个免费应用中，只有8个对本地数据丢失敏感\footnote{对于管理诸如无法重现的照片等关键数据的应用，依然可以通过简单配置选项使用常规的文件系统功能。}（详见\ref{subsec:insight}节）。
 
@@ -40,7 +40,7 @@ Mickens:2014:BFC:2616448.2616473}在不同领域利用了相似的分离手段�
 
 \textbf{原理1} 当前手机内存DRAM的容量足够支持应用数据存储。
 
-手机内存DRAM的容量经历了快速的增长（自2010年以来8倍增长，从512~MB到4~GB），当前标配已达到2~GB或更多。而该DRAM大小已经可以支持在桌面电脑上运行Windows XP系统。尽管手机应用的数据量需求也在增长，但其增长率相对较低。我们以网页请求的大小为例，其自2010年以来的同期增长率仅为94\%~\cite{HTTP:Transfer:2013}。此外，手机环境下限于屏幕大小，用户通常只使用一两个应用，活跃的数据量有限。进一步的评测参见\ref{subsec:eval-mem}节。
+手机内存DRAM的容量经历了快速的增长（自2010年以来8倍增长，从512~MB到4~GB），当前标配已达到2~GB或更多。而该DRAM大小已经可以支持在桌面电脑上运行Windows XP系统。尽管手机应用的数据量需求也在增长，但其增长率相对较低。我们以网页请求的大小为例，其自2010年以来的同期增长率仅为94\%~\cite{HTTP:Transfer:2013}。此外，手机环境下限于屏幕大小，用户通常只使用一两个应用，活跃的数据量有限。进一步的评测参见\ref{subsec:mem-fp}节。
 
 \textbf{原理2} 手机内存可以被视作可靠的数据存储。
 
@@ -66,7 +66,7 @@ Mickens:2014:BFC:2616448.2616473}在不同领域利用了相似的分离手段�
 
 \begin{figure}
   \centering
-  \includegraphics[width=0.9\columnwidth]{e-curve-app}
+  \includegraphics[width=0.9\textwidth]{e-curve-app}
   \caption{不同形状的$e$曲线表明特定于应用的I/O模式。图中数据滞后量的范围统一到0至100，实际数值标记在应用名称旁。}
   \label{fig:e-curve-app}
 \end{figure}
@@ -79,7 +79,7 @@ Mickens:2014:BFC:2616448.2616473}在不同领域利用了相似的分离手段�
 
 \begin{figure}
   \centering
-  \includegraphics[width=0.8\columnwidth]{arch}
+  \includegraphics[width=0.8\textwidth]{arch}
   \caption{MobiFS系统架构图}
   \label{fig:arch}
 \end{figure}
@@ -142,7 +142,7 @@ MobiFS的策略框架包含三个模块：（1）事务划分模块，根据$e$�
 
 \begin{figure}
 \centering
-\includegraphics[width=0.7\columnwidth]{figures/tpl}
+\includegraphics[width=0.7\textwidth]{tpl}
 \caption{由选择不同的事务结束点产生的不同$e$曲线}
 \label{fig:tpl}
 \end{figure}
@@ -152,29 +152,172 @@ MobiFS的策略框架包含三个模块：（1）事务划分模块，根据$e$�
 具体地，我们提出最佳折衷点定位算法（tradeoff point location，TPL），用于确定写日志中结束当前事务的记录项。每个来自应用的写操作都会增加数据滞后量，对应于$e$曲线上的一个点。当一个事务关闭时，$e$曲线重新从$e=0$开始计算，如图\ref{fig:tpl}所示。最理想地，结束事务的最佳点应当在$e$值最高的曲线顶点。我们采用反证法，假设另一个算法决定在$P'$点关闭当前事务，此时$x = s_0$，而曲线顶点$P$处于不同的位置$x = s_1$。那么我们可以在保持下一个事务结束点$x = s_2$不变的前提下，通过将当前事务结束点变为$P$来获得更多的能耗节约量。将当前事务结束点由$P'$变为$P$可以提高数据覆写发生的概率\footnote{注意这不是一个严格的数学证明。虽然可以构造出反例，但总体来说可能性更大。}。不失一般性，我们令$s_0 < s_1$；在$[s_0, s_1]$（$[s_1, s_2]$）区段，我们算法的覆写数据量为$m_0$（$m_1$），假设的算法的覆写数据量是$m_0'$（$m_1'$）。那么我们有$m_0 - m_0' > m_1' -
 m_1$，原因如下：区段$[s_0, s_1]$上，$e$曲线仍然在快速上升，表明可以覆写的数据量较大，但却被假设算法截断，会导致大量可以覆写的数据丧失覆写机会；相反地，由于$P$是曲线顶点，如果不被截断，曲线在$[s_1, s_2]$区段上是下降的，意味着较少的数据可以被覆写。上述公式简单等价变换可得$m_0 + m_1 > m_0' + m_1'$。综上，在$P$点截断曲线是限制数据滞后量的一种手段，而采用我们的策略可以尽可能多地增加数据覆写的可能。
  
-在实际中，我们还需要应对其他一些挑战。曲线会出现波动导致算法定位在局部最优解，为此我们使用一个滑动窗口进行线性拟合来屏蔽这些波动。具体地，算法记录$e$曲线上过去$k$个点，拟合出一条曲线，然后根据其斜率判断是否到达顶点。我们之所以选择线性拟合，而不是更高阶的曲线拟合，是因为策略引擎对于每次写操作都要进行计算，算法复杂度会影响CPU的能耗。与此同时，我们设置了一个数据滞后量（或者冲刷间隔时间）的上限，以防止为等待顶点出现而无穷等待的情况。该算法的评测参见\ref{subsec:energy}节。
+在实际中，我们还需要应对其他一些挑战。曲线会出现波动导致算法定位在局部最优解，为此我们使用一个滑动窗口进行线性拟合来屏蔽这些波动。具体地，算法记录$e$曲线上过去$k$个点，拟合出一条曲线，然后根据其斜率判断是否到达顶点。我们之所以选择线性拟合，而不是更高阶的曲线拟合，是因为策略引擎对于每次写操作都要进行计算，算法复杂度会影响CPU的能耗。与此同时，我们设置了一个数据滞后量（或者冲刷间隔时间）的上限，以防止为等待顶点出现而无穷等待的情况。该算法的评测参见\ref{subsec:eval-ada}节。
 
-\subsection{行为间隔预测}
+\subsection{用户操作间隔预测}
 \label{subsec:interval}
 
 \subsection{事务调度}
 \label{subsec:sched}
 
-\section{系统实现和效能评测}
+\section{系统实现}
 
-\subsection{系统实现}
+\subsection{与现有存储组件的整合}
+\label{subsec:ext4}
 
-\subsection{评测方法}
+\section{系统评测}
+\label{sec-eval}
 
-\subsection{内存占用评测}
-\label{subsec:eval-mem}
+我们主要通过三个指标评价MobiFS的效能：对应用及用户的动态适应性（第\ref{subsec:eval-ada}节），应用的响应度（第~\ref{subsec-eval-resp}节），以及能量消耗（第\ref{subsec-eval-energy}节）。在讨论系统设计带来的好处之前，我们也估计了MobiFS运行各个应用带来的额外内存开销（第\ref{subsec:mem-fp}节）。
 
-\subsection{应用和用户感知评测}
+\subsection{评测方法} \label{subsec-method}
 
-\subsection{应用响应度评测}
+我们的评测结果既包含基于日志的模拟，也包含实际设备上的测量；既包含标准测试集，也包含实际的应用。
+我们使用一台三星手机Samsung
+Galaxy Premier I9260（双核1.5~GHz处理器，1~GB内存，Android 4.1操作系统），和两个Kingston microSD闪存卡（默认的128~MB日志和4~KB块大小）。所有实验结果都在这两个崭新的闪存上重复，以避免硬件问题。
+一台Monsoon电源监视器~\cite{Monsoon:PM}用于测量设备的能量消耗。默认情况下，MobiFS指我们基于Ext4的实现；文件系统Ext4使用默认的Android上的配置，仅通过日志保护元数据。
 
-\subsection{能耗评测}
-\label{subsec:energy}
+模拟用的日志收集自5位志愿者用户，他们每人各自操作了如下几款最为流行的应用（使用它们各自的私人账户登录）：Facebook
+（FB）、Pandora（PA）、Angry Birds（AB）、Netflix（NF）、Twitter（TT）、Google Maps（GM）、Citrix Receiver（CR）、Flipboard（FL）、Web Browser（WB）和WeChat（WC）。 每个应用的使用时间为5分钟。收集的日志包括I/O系统调用，页缓存访问和屏幕接触操作的时间戳。
+
+标准测试集包含如下几个部分：（1）AnTuTu的I/O和数据库标准测试集；（2）RL面向SQLite的标准测试集，包含13个负载；（3）MobiBench标准测试集，主要模拟了Android系统的I/O特性。此外，我们还使用了一个自制的基准测试程序，它的主要行为是向一个文件的相同的区域顺序地通过\texttt{write}系统调用写入8~MB数据，重复该行为16遍，并在每2遍之后调用一次同步的\texttt{fsync}。
+
+对于另一部分用代码操纵真实应用的实验，我们选择了浏览器、Facebook和Twitter三款应用，因为他们代表了三类典型的I/O特性：浏览器极少调用\texttt{fsync}，其效能主要受Ext4文件系统后台冲刷的影响；Twitter与之相反，每秒钟发出高达50次以上的\texttt{fsync}系统调用；Facebook则发出中等数量的\texttt{fsync}系统调用。我们使用monkeyrunner~\cite{Monkeyrunner}来重现编码好的用户交互行为，以获得可重现性和可比性。我们使用局域网内的Apache2网页服务器测试浏览器，通过802.11n Wi-Fi连接，以尽量减小动态的网络状况对测试带来的噪音。
+
+\subsection{内存开销} \label{subsec:mem-fp}
+
+我们依据I/O日志估计了MobiFS最坏情况下的内存开销，如图~\ref{fig:mem-fp}所示。
+我们假设MobiFS不生成VCT的检查点。图中y轴是由文件系统引入的平均内存开销\footnote{为了反映各个内存开销曲线的不同形状，我们使用积分计算该均值。对于目标增长速率
+$\alpha$以及已知的内存开销曲线在时间区段${\Delta t}$上的积分$I$，我们认为$\frac{1}{2}\alpha{\Delta t}^2 = I$，所以有
+$\alpha=2I/{\Delta t}^2$。}的增长速率。平均而言，Ext4文件系统的开销在无操作系统干预的情况下以25.6~KB/s速率增长，而MobiFS导致的增长速率为35.8~KB/s。换句话说，如果有100~MB额外内存空间，MobiFS在最坏情况下可以支持一个应用运行17.4分钟而不冲刷数据到闪存（最坏情况的增长速率为100.5~KB/s）。需要注意的是，当内存开销超过一定阈值，MobiFS可以显式地执行检查点生成以释放内存占用。总之，考虑到对于应用而言设备内存日益充裕，MobiFS带来的内存开销是可以接受的。
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=\textwidth]{mem-fp}
+  \caption{Ext4文件系统和MobiFS其上运行不同应用时的内存开销增长速率。}
+  \label{fig:mem-fp}
+\end{figure}
+
+\subsection{对应用和用户的动态适应性} \label{subsec:eval-ada}
+
+本节测评MobiFS对于应用和用户的动态适应性。该适应性由我们的最佳折衷点定位算法实现（第\ref{subsec:point}节）。
+
+\noindent\textbf{对应用和用户的动态适应性：}
+我们在I/O日志上执行最佳折衷点定位算法，并假设系统不考虑用户交互行为而立即生成检查点。
+图\ref{fig:ada-int}展示了计算出的每个应用的平均检查点间隔。我们可以看到，MobiFS的平均检查点间隔有非常大的波动，其变化跨度可以达到21.7倍。与此同时，MobiFS几何平均的检查点间隔是普通Ext4冲刷间隔的17.5倍。MobiFS不仅大幅度扩展了Ext4冲刷的间隔，而且针对不同应用具有自适应性。
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=\textwidth]{ada-int}
+  \caption{MobiFS对于不同应用和用户产生的动态的检查点间隔。右侧用户统计数据（u$x$）基于用户使用Facebook的结果。}
+  \label{fig:ada-int}
+\end{figure}
+
+图\ref{fig:ada-int}同时显示了Facebook的数据按用户聚类的平均检查点间隔。对于该单一应用，不同用户之间，仍体现出高达2.6倍的差异。这种面向用户的适应性是由于用户浏览的内容不同，内容的来源不同，以及个人操作习惯和阅读速度等方面的差异。
+
+\noindent\textbf{自适应性带来的优势：}
+假如我们完全不冲刷数据到闪存，那么此时的$e$曲线（称为理想化曲线）会呈现最大可能的数据覆写量。MobiFS通过适应不同的应用或用户个体，尽量贴近该理想化曲线。相比之下，Ext4文件系统则受限于固定的冲刷间隔和传统\texttt{fsync}系统调用的要求。为了展现MobiFS从自适应性中获得的好处，图\ref{fig:spa-ada}使用一个$e$曲线的变种来与Ext4文件系统比较。这里的$e$比率是基于从应用运行开始累积的总体数据滞后量$s$，而不像原定义中从上一次检查点算起。我们的获得的观察结论是，MobiFS更加紧密地跟进理想化曲线，而这里面体现的较高的数据覆写率代表着更好的能量效率。
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\textwidth]{ada-facebook}\\
+\includegraphics[width=\textwidth]{ada-twitter}\\
+\caption{基于应用写数据累积量的$e$曲线。}
+\label{fig:spa-ada}
+\end{figure}
+
+\subsection{应用响应度} \label{subsec-eval-resp}
+
+MobiFS聚焦在两个可以提升应用响应度的因素：尽量小的响应冲突，和尽量高的I/O效率。
+
+\noindent\textbf{响应冲突：}
+当我们的间隔预测算法（第\ref{subsec:interval}节）预测了一个用户空闲间隔，MobiFS会尽量调度一次检查点生成操作来占满该段预测的空闲时间。响应冲突是指一个或多个预料之外的用户操作发生在了预期空闲的间隔内。我们用两个指标来评价预测的质量：（1）平均每次预测遇到的响应冲突；（2）预测间隔的平均时长。更长的间隔可以提供更多事务合并的可能，进而节省时间和能量消耗。
+
+图\ref{fig:int-rc}和图\ref{fig:int-len}分别展示了MobiFS基于状态机的解决方案在上述两个指标上的表现。该结果依据我们的用户操作日志模拟得出。我们将MobiFS的方法与普遍使用的最近最小模型（last min model，LMM）和最近平均模型（last average model，LAM）进行比较。这两个模型分别使用最近$k$实际间隔的最小值或均值作为对下一个间隔的预测。由于LMM总是做出保守的选择，它仅造成每预测0.26次响应冲突，远小于LAM的1.18次。很自然，我们的状态机算法很难在这个指标上超越LMM，但实现了比LAM低54.8\%的表现。另一方面，LAM预测间隔的时长比LMM高很多。平均而言，我们的状态机算法可以达到LAM平均预测时长的75.9\%，而比LMM高出2.7倍。由于我们的状态机算法可以记忆之前的较长的间隔并据此信息做出预测，它甚至在9组应用测试中的3组上表现好于LAM。总结起来，MobiFS获得了接近于LMM的较低的响应冲突数，同时实现了类似于LAM的较长的预测间隔时长。它在LMM和LAM之间同时实现了双方的优势。
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=\textwidth]{int-rc}
+  \caption{三种模型的响应冲突比率。}
+  \label{fig:int-rc}
+\end{figure}
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=\textwidth]{int-len}
+  \caption{三种模型预测间隔的平均长度。}
+  \label{fig:int-len}
+\end{figure}
+
+\noindent\textbf{I/O吞吐率：}
+由于I/O在很大程度上影响应用的响应度，我们在实际设备上评测MobiFS在典型I/O指标上的表现。表\ref{tbl:micro-bench}和图\ref{fig:bench-item}显示了AnTuTu（ATT）、RL和MobiBench。结果表明，MobiFS的写性能可以超越Ext4高达480倍（例如随机写的结果），其上数据库操作的吞吐率也高出一个数量级。
+
+\begin{table}[!ht]
+\caption{在Android的Ext4和MobiFS上运行AnTuTu（ATT）和RL标准测试集获得的性能和能量数据。ATT的评分越高越好；RL标准测试集的执行时间越少越好。}
+\label{tbl:micro-bench}
+\begin{tabular}{p{0.45in}|p{0.45in}|*{2}{p{0.5in}}p{0.35in}}
+ \hline
+ \multicolumn{2}{c|}{项目} & Ext4 & MobiFS & 提升\\
+ \hline
+ \multirow{2}{*}{性能} & ATT评分 & 689.9$\pm$21.5 & 1817$\pm$51.0 & +163\% \\
+ \cline{2-5}
+ & RL(sec.) & 38.6$\pm$0.4 & 19.1$\pm$0.4 & -50.1\% \\
+ \hline
+ \multirow{2}{*}{能量(J)} & ATT & 24.3$\pm$0.8 & 20.3$\pm$0.7 & -16.4\% \\
+ \cline{2-5}
+ & RL & 43.8$\pm$0.5 & 37.6$\pm$0.6 & -14.2\% \\
+ \hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=\textwidth]{bench-item}
+  \caption{MobiBench对Ext4和MobiFS的分项目性能测评。}
+  \label{fig:bench-item}
+\end{figure}
+
+MobiFS倾向于挤压用于读的页缓存，因为Linux并不隔离用于读和写的缓存。幸运的是，根据我们的日志，平均有84.9\%的读操作可以命中在MobiFS锁定在内存的写缓存中。该现象缓解了读和写缓存不平衡的潜在问题。
+
+\noindent\textbf{用户感知的延迟：}
+我们通过测量monkeyrunner结束一段在实际设备上运行的预定义的用户交互过程的时间，来评价应用响应的延迟。这种方法的优势在于（1）可以消除真人用户操作中的随机性和不可比性以及（2)可以反应用户感知到的延迟而不包含真人用户具有差异的反应时间。在图\ref{fig:bench-app}中， monkeyrunner操作浏览器访问50个固定的网站，测得MobiFS上的平均页面载入时间比Ext4下降了49.0\%（平均每个操作减少延迟0.36秒）。对于Facebook采用类似方法，测得MobiFS上五次载入新鲜事的延迟相较Ext4下降53.6\%（平均每个操作减少延迟0.85秒）。最后，对于Twitter，载入\#Discover频道十次所需的时间在MobiFS上比Ext4下降了51.9\%（平均每个操作减少0.47秒延迟）。总之，MobiFS显著减小了真实应用上用户感知的操作延迟。
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=\textwidth]{bench-app}
+  \caption{在Android的Ext4和MobiFS上运行应用的响应度和能量消耗。}
+  \label{fig:bench-app}
+\end{figure}
+
+\subsection{能量消耗} \label{subsec-eval-energy}
+
+MobiFS减少能量消耗的主要方式是减少冲刷到闪存的数据量。所以本节首先基于用户的日志模拟计算该数据量的减少，然后在实际设备上测量MobiFS的能量节约。
+
+\noindent\textbf{刷出数据量的减少：}
+图\ref{fig:flush-data}依据日志比较了Ext4和MobiFS刷出到闪存的数据量。节省的刷出数据量随各个应用有所不同，这依赖于一个应用发出的写中覆写的数量。取所有应用测试结果的几何平均，MobiFS比Ext4少刷出了53.0\%的数据量。
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=\textwidth]{flush-data}
+  \caption{在Android的Ext4和MobiFS上各个应用刷出的数据量。}
+  \label{fig:flush-data}
+\end{figure}
+
+我们的评测表明MobiFS由于自身写两次的问题（第\ref{subsec:ext4}节），刷出相同的数据量要比常规Ext4多花费66.4\%的能量。因此，总体上MobiFS模拟出的能量代价是Ext4的78.3\%。与此同时，如果我们计算所有应用刷出数据量的平均值，Ext4比MobiFS多刷出4.29倍的数据量，这意味着MobiFS比Ext4少消耗61.2\%的能量。
+
+\noindent\textbf{设备能量节省：}
+我们首先考虑图\ref{fig:baseline}中基准能量数据。逻辑上MobiFS只刷出Ext4一半的数据量，但由于写两次问题（第\ref{subsec:ext4}节），理论上应当与Ext4有相似的能量消耗。然而在实际当中，Ext4模拟和原MobiFS需要的能量都比理论预期少（低16.8\%），因为内部的数据移动比显式地分开调用\texttt{write}节省CPU处理消耗。另一方面，尽管基于Btrfs的MobiFS实现“Btr-MobiFS”理论上没有写两次问题，但消耗的能量与Ext4类似，原因可能是COW及其自身实现的开销。另外，通过比较MobiFS和Ext4模拟，我们可以看到MobiFS特有组件的能量消耗只占总体的4.0\%。
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=\textwidth]{baseline}
+  \caption{不同系统的基准测试程序结果。Ext4仅对元数据做日志；Ext4模拟是一个Ext4文件变形，模拟MobiFS的刷出行为，即在MobiFS刷出数据时也做刷出操作（对所有数据做日志）。}
+  \label{fig:baseline}
+\end{figure}
+
+实际设备上运行标准测试集的结果也印证了MobiFS对减小能量消耗的贡献。表\ref{tbl:micro-bench}包含了AnTuTu和RL标准测试集下，MobiFS相对于Ext4的能量节约。值得注意的是，这些标准测试集的行为并没有完全体现出MobiFS可节约的全部潜能，因为我们的设计与应用和用户的行为高度适应。为此，我们采用真实应用和用户行为进行了下面的实验。
+
+图\ref{fig:bench-app}比较了MobiFS和Ext4在真实设备上使用实际应用的能量代价。特别地，整体设备的能量代价在使用浏览器、Facebook和Twitter三种应用时分别平均下降了32.1\%、41.3\%和33.6\%。我们可以看到，MobiFS充分地提升了移动应用的能量效率。
 
 \section{本章小结}
 
