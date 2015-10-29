@@ -1,11 +1,198 @@
 \chapter{研究现状}
 \label{chap:related}
 
-本章概述传统上文件系统、事务系统和软件透明的一致性机制及其性能优化。前人工作部分针对内存和存储二元结构设计，或者难以适用于持久性内存系统，或者无法将持久性内存的性能优势完全发挥出来。
+本章概述传统上文件系统、事务系统和软件透明的一致性机制及其性能优化。前人工作大部分针对内存和存储二元结构设计，通常难以适用于持久性内存系统，或者无法将持久性内存的性能优势完全发挥出来。在对比中，我们同时强调了本文工作的优势。
 
 \section{文件系统中的现有数据一致性机制及其性能}
 
+\subsection{重新审视\texttt{fsync}系统调用}
+
+作为POSIX标准的文件系统接口之一的\texttt{fsync}系统调用，在维系数据\emph{一致性}方面扮演着重要角色；而这主要因为它向调用者提供了数据\emph{持久性}的保证。然而一致性和持久性的紧耦合无法达到性能的苛刻需求。为此，若干工作探索了改变\texttt{fsync}语义，分离一致性和持久性两个功能。
+
+xsyncfs\cite{Nightingale:2006:RS:1298455.1298457}在保证数据一致性的前提下允许\texttt{fsync}返回以提高应用的执行速度，但为了使这种行为的改变对系统外部用户或者其他系统保持透明，xsyncfs缓冲所有用户可见的输出，直到\texttt{fsync}已经完成数据的持久化之后再释放这些输出。我们的工作着眼于更加特定的移动系统环境，给出的持久性保证基于新的持久性内存系统假设，从而进一步简化一致性相关设计，并针对移动环境采用比xsyncfs更加偏向能耗和响应度的折衷。
+
+OptFS\cite{Chidambaram:2013:OCC:2517349.2522726}引入了
+\texttt{osync}和\texttt{dsync}两个接口。前者能够支持传统的一致性需求，但仅确保\emph{最终}持久性，即调用结束时并不保证持久性。该模型为本文工作提供了重要参考。然而，OptFS的机制通过校验和来确保磁盘上写日志的一致性，并不适用于我们选取的应用目标，移动系统环境。更重要的是，该工作缺乏系统的定量的策略设计。其他相近工作\cite{Ma:2011:LPF:1989323.1989325,
+Mickens:2014:BFC:2616448.2616473, Ports:2010:TCA:1924943.1924963}简单地使用一个静态的时间阈值来限制数据滞后性，无法自适应于不同的应用和用户。上述相关工作没有面向持久性内存和移动系统的设计，更没有利用两者的特殊性质。
+
+\subsection{传统内存数据管理}
+
+各种主存数据库系统\cite{DeBrabant:2013:ANA:2556549.2556575,DeWitt:1984:ITM:602259.602261,
+Kallman:2008:HHD:1454159.1454211, Ongaro:2011:FCR:2043556.2043560}、动态的日志机制（adaptive logging）\cite{Kim:2010:ALM:1920841.1921023}、可恢复的虚拟内存系统（recoverable virtual memory）\cite{Satyanarayanan:1993:LRV:168619.168631}、面向闪存\cite{Dai:2004:EEL:1031495.1031516,
+Kim:2012:GBC:2254756.2254786, Lv:2011:OBM:1989323.1989326}以及基于NVM\cite{Coburn:2013:AMT:2517349.2522724, hitz1994file, 6880383, Wu:1994:ENM:195473.195506}的存储系统都在着力优化内存数据冲刷或回写到持久化介质的效率。基于NVM的换入换出机制\cite{6986137}显示了相较于传统设计在性能方面的改进。我们同样关注该优化点，但这些工作都没有面向移动系统和持久性内存，无法提供我们目标环境下的最优解决方案。
+
+qNVRAM\cite{183627}实现了一个持久性的页缓存，但要求使用新的API去访问该缓存，对遗留代码不友好。外部日志（external journaling）\cite{179048}要求额外的存储设备，且未涉及能耗方面的优化。Fjord\cite{6558430}虽然做到区分应用进行特异性优化，但区分的方法仅根据应用是否基于云服务，进而依据此更改软件系统的配置。主机端闪存缓存（host-side flash caching）\cite{koller2013write}实行了类似的在系统性能和数据滞后性之间的折衷。与之前评述的其他工作类似，这些工作没有做到对移动环境以及不同应用或用户行为的适应性。我们的工作保持对\texttt{fsync}系统调用和页缓存的最小更改，适用于受限的移动环境；对折衷策略的定量化研究使得我们可以实现应用或用户特定的自适应的系统优化。
+
+\subsection{能量和应用响应度优化}
+BlueFS\cite{Nightingale:2004:ESF:1251254.1251279}在多个节点之间智能地选择代价最小的副本来服务用户请求。SmartStorage\cite{Nguyen:2013:SSE:2493432.2493505}牺牲了4\%-6\%的性能来换取能量效率，主要的手段是通过优化存储系统参数。而本文工作的目标是通过基于持久性内存的设计显著提高性能的同时达到节能的效果。Capsule\cite{Mathur:2006:CEO:1182807.1182827} 仅仅考虑随机的和顺序的数据访问特性来优化存储。本文的工作将对持久性内存条件下应用的访问模式和相应的优化策略给予定量的系统的研究。SmartIO\cite{Nguyen:2014:ISR:2638728.2638841}主要优化手段是设置读操作的优先级高于写操作。Mobius\cite{Chun:2012:MUM:2307636.2307650}则考虑了分布式环境下节点的位置、网络拥塞等要素。此外，通过增加I/O突发度（burstiness）提高能量效率的工作\cite{Papa:2003:EET, Weissel:2002:CIN:844128.844140}和本文的工作类似，但我们同时考虑动态的策略和异步\texttt{fsync}系统调用等手段。Simba\cite{188466}设计了一个同时面向本地存储和云存储的同步（sync）接口。与Simba类似，我们提供对文件系统和其上数据库系统的数据一致性保证。总之，我们面向移动系统的优化目标、对于系统行为的观察和多目标策略设计等有别于如上各类现有的系统优化工作。
+
+\subsection{最新的移动文件系统}
+F2FS\cite{188454}（在Moto X设备上测试）可以获得比Ext4\cite{MOTOX:2013}高128\%的随机写吞吐率。DFS\cite{Josephson:2010:DFS:1855511.1855518}通过将存储管理功能委托给闪存硬件来提升I/O性能。相比之下，我们面向持久性内存的解决方案实现的读写性能比现有文件系统设计高出几个数量级（本文测评结果可参见图~\ref{fig:bench-item}）。
+
 \section{事务系统中的现有数据一致性机制及其性能}
 
+相对于随机和顺序读写性能不对称的传统机械硬盘，人们尝试新的闪存和非易失随机访问内存等持久性内存系统，更加高效地完成对ACID中数据持久性的支持。这种持久性系统的设计和优化，与事务系统的实现及其一致性机制紧密相关。数据库作为典型的事务系统，其一致性机制非常成熟，本节重点讨论新的存储介质对数据库系统持久化带来的影响。
+
+\subsection{在数据库中使用闪存}
+
+数据库对表和索引的写入主要是随机的，而对事务日志、历史版本和临时表的写是顺序的。
+以下两篇论文分别研究了对这两部分应用固态硬盘（SSD）的问题。页内日志（IPL）\cite{Lee:2007:DFD:1247480.1247488}在内存中的扩展页中缓存细粒度的数据更新，而后在智能选择的闪存位置上成批刷出这些缓存。该设计减少了写带宽，支持高速的从日志恢复页的操作，而且通过不覆写闪存数据避开了低效的写前抹除（erase-before-write）。然而，这些缓存的更新并不是\emph{同步地}实现持久化，而是需要全系统范围的一个额外的日志机制来保证其持久性。另一篇文献\cite{Lee:2008:CFM:1376616.1376723}是较早指出现有数据库中顺序写以及固态硬盘适用性的工作。特别地，针对事务日志，该工作比较了机械硬盘和固态硬盘在传统组提交机制下的表现。该工作指出了大量并发用户造成的事务吞吐率降低的问题，但仅仅将之归结于CPU的速度瓶颈。
+
+进一步地，文献\cite{Lee:2009:AFM:1559845.1559937}和文献\cite{Chen:2009:FEF:1559845.1559855}展示了SSD的随机写性能可以胜任商用数据库的需求。他们指出，一块企业级闪存盘在事务吞吐率、性价比和能耗等方面，可以超过一个由8块每分钟15000转的企业级机械硬盘构成的RAID 0阵列。不过这些工作依然使用一个集中的较大的日志缓冲区（16 MiB）。文献\cite{Chen:2009:FEF:1559845.1559855}只利用了多个USB闪存设备来冲刷日志缓冲区。而新的NVMe接口和SSD提供了更为丰富的并行性，可以进一步提升系统性能。
+
+Aether\cite{Johnson:2010:ASA:1920841.1920928}是一种具有较强扩展性的日志机制。该论文分析了在高可扩展性数据库系统Shore-MT中预写式日志（write-ahead logging）的四个性能瓶颈：（1） I/O延迟，（2）日志导致的锁竞争（持有写锁），（3）上下文切换，以及（4）日志缓冲区的竞争。Aether通过提前释放锁技术和刷出流水线等将I/O延迟移出关键路径，并通过在数组中收集请求来消除请求对日志缓冲区的竞争。然而，这些数组最终依然会竞争日志缓冲区。基于Aether的文献\cite{raey}着力解决多插座（multisocket）的性能开销问题，主要手段是设计了分布式日志缓冲区。然而，他们的结论是其他跨插座通讯会抵消分布式日志的好处。
+
+文献\cite{Pandis:2010:DTE:1920841.1920959}通过将每个工作线程对应于不重叠的数据子集来减少线程竞争。与将事务分配到工作线程的方式不同，该工作将事务分为若干子部分，然后依照数据分布将它们分配到各工作线程。这种设计选择，和早期基于阶段（stage-based）的服务器设计\cite{Welsh:2001:SAW:502034.502057}和基于线程的服务器设计\cite{vonBehren:2003:CST:945445.945471}之间的争论有相似之处。
+
+在SiloR\cite{Zheng:2014:FDF:2685048.2685085}中，工作线程将日志项传递给专门的日志线程，后者将数据并行地冲刷出去并维护日志项的顺序。我们的工作可以不使用额外的日志线程，仍然由工作线程完成数据冲刷。我们同时将SSD的性能特征考虑在内。
+
+\subsection{在数据库中使用非易失随机访问内存}
+
+文献\cite{Huang:2014:NLT:2735496.2735502}主要解决了集中式日志缓冲器的瓶颈问题。该工作提出每事务日志缓冲区，并使用指针来跟踪日志项。这种设计依赖于非易失随机访问内存的随机访问特性。文献\cite{Wang:2014:SLT:2732951.2732960}将NVRAM应用于分布式日志。但是该工作依然涉及跨日志的条目间顺序问题。本文工作以缓冲区为单位的顺序机制将简化该类设计。
+
+
+文献\cite{5767918}较早提出将写日志记入NVRAM构成的缓冲区，以避免传统组提交机制中延迟长的问题。但该设计依赖于NVRAM按字节访问的属性。
+
+文献\cite{Arulraj:2015:LTS:2723372.2749441}探索了三种存储引擎架构下使用NVRAM的好处：本地更新，写时拷贝更新，以及日志结构更新。但他们底层依赖的预写式日志机制（write-ahead logging）依然是传统的集中式设计。
+
+\subsection{在事务性内存中使用NVRAM}
+
+以下工作与NVRAM按字节访问的特性紧密结合，大部分设计并不适用于SSD的接口。
+
+Mnemosyne\cite{Volos:2011:MLP:1950365.1950379}使用原始字日志（raw word log）来实现预写式重做日志。每个原子性写入的字由一个反转比特（tornbit）标志是否完成。而NV-heaps\cite{Coburn:2011:NMP:1950365.1950380}则使用一个撤销日志（undo log）。文献\cite{Kannan:2014:RCP}提供一个灵活的基于对象或字的日志接口。文献\cite{Pelley:2014:MP}定义了多种模型来强制NVRAM写持久化的顺序。Atlas\cite{Chakrabarti:2014:ALL:2660193.2660224}不依赖于事务性内存，但可以将日志机制扩展到基于锁的程序。我们的工作也可以借助Atlas，将SSD的持久化能力提供给靠锁保护的常规虚拟内存访问。
+
+%
+%Class 4: Using SSD with TM
+%
+%The below paper is in a very similar position with our work. 
+%
+%[18] Saxena, M.; Shah, M. A.; Harizopoulos, S.; Swift, M. M. \& Merchant, A. "Hathi: Durable Transactions for Memory Using Flash", in Proceedings of the Eighth International Workshop on Data Management on New Hardware, ACM, 2012.
+%
+%Similar to our idea, Hathi supports ACID in-memory transactions backed up by SSD. It enhances the regular write-ahead logging by mainly two techniques: first, an async commit mechanism that lets the application to check completion of a commit later on; second, thread-local logs that avoid contention on a centralized log buffer. However, the first passes on the checking burden to applications; the second still needs coordination between threads to sustain the increasing LSN. Overall, the best timely durability result shown in their experiment, which allows 0.2 ms lag, only achieves 13\% throughput of the full async commit.
+%
+%[19] Sears, R. \& Brewer, E. "Stasis: Flexible Transactional Storage", in OSDI, 2006.
+%
+%Stasis made an effort to bridge the application requirements and the low-level storage hardware by transactions, instead of a database. It focuses on the efficiency and flexibility of interface design. Internally, traditional write-ahead logging is used.
+%
+%[20] Santry, D. \& Voruganti, K. "Violet: A Storage Stack for IOPS/Capacity Bifurcated Storage Environments", in USENIX ATC, 2014.
+%
+%This paper argues that mapping an in-memory graph structure to either a database or a disk friendly format is inefficient. Therefore it uses the transactional memory to collect updates, and design Fibonacci Array to incorporate these updates in the block storage. However, due to Intel's restricted TM, a successful transaction is visible to other threads before it is made durable.
+%
+%Misc.
+%
+%Work on other layers either justifies our choice of architecture, or confirms with our design assumptions.
+%
+%1. Object in VM
+%
+%[21] Hwang, T.; Jung, J. \& Won, Y. "HEAPO: Heap-Based Persistent Object Store", in Trans. Storage, ACM, 2014.
+%
+%The authors construct a lock-based key-value store on their NVRAM-based object system. The key-value store uses undo logging for crash consistency. They state the benefit of logging less data than TM, but programmers are restricted in using their key-value interfaces.
+%
+%[22] Balakrishnan, M.; Malkhi, D.; Wobber, T.; Wu, M.; Prabhakaran, V.; Wei, M.; Davis, J. D.; Rao, S.; Zou, T. \& Zuck, A. "Tango: Distributed Data Structures over a Shared Log", in SOSP, 2013.
+%
+%Tango is a distributed service that support transactional access to in-memory objects from various clients. It relies on a durable shared log to maintain transactional semantics. The design rationale is similar to ExciteVM which focuses on processes in a single machine.
+%
+%2. File system
+%
+%[23] Min, C.; Kim, K.; Cho, H.; Lee, S.-W. \& Eom, Y. I. "SFS: Random Write Considered Harmful in Solid State Drives", in FAST, 2012.    
+%
+%SFS transforms all random writes at file system level to sequential ones at SSD level through a log-structured approach.
+%
+%[24] Park, S.; Kelly, T. \& Shen, K. "Failure-atomic Msync(): A Simple and Efficient Mechanism for Preserving the Integrity of Durable Data", in EuroSys, 2013.
+%
+%[25] Dulloor, S. R.; Kumar, S.; Keshavamurthy, A.; Lantz, P.; Reddy, D.; Sankaran, R. \& Jackson, J. "System Software for Persistent Memory", in EuroSys, 2014.
+%
+%Overall, we have to demonstrate through experiments that collecting small writes in a file system and relies on fsync() for durability is not as efficient as our approach in the case of logging.
+%
+%[25] Huang, J.; Badam, A.; Qureshi, M. K. \& Schwan, K. "Unified Address Translation for Memory-mapped SSDs with FlashMap", in ISCA, 2015.
+%
+%This work improves I/O performance by combining the virtual memory, the file system, and the FTL in terms of address translations, sanity and permission checks. We follow the same philosophy of thinning the traditional IO stack. 
+%
+%3. Block device
+%
+%[26] Stoica, R.; Athanassoulis, M.; Johnson, R. \& Ailamaki, A. "Evaluating and Repairing Write Performance on Flash Devices", in Proceedings of the Fifth International Workshop on Data Management on New Hardware, ACM, 2009.
+%
+%This paper identifies an interesting phenomenon that the random write throughput of SSD drops as time goes by (in a 24-hour run). Fortunately, our small but sequential writes do not incur this situation.
+%
+%[27] Chen, F.; Koufaty, D. A. \& Zhang, X. "Understanding Intrinsic Characteristics and System Implications of Flash Memory Based Solid State Drives", in SIGMETRICS, 2009.
+%
+%[28] Jung, M. \& Kandemir, M. "Revisiting Widely Held SSD Expectations and Rethinking System-level Implications", in SIGMETRICS, 2013.    
+%
+%[29] Caulfield, A. M.; De, A.; Coburn, J.; Mollow, T. I.; Gupta, R. K. \& Swanson, S. "Moneta: A High-Performance Storage Array Architecture for Next-Generation, Non-volatile Memories", in MICRO, 2010.
+% 
+%This paper shows that software, including the filesystem but excluding any upper-layer application, can cost 68\% of the latency of a 4 KB write to a NVRAM based storage via PCIe. Moneta reduces the software overhead by avoiding locks, interrupts and scheduling. Besides, the best optimized results also see a 3x throughput increment from random writes (0.5 KB per write) to sequential writes (8 KB per write), resonating with our experience with flash-based SSD.
+%
+%[30] Yu, Y. J.; Shin, D. I.; Shin, W.; Song, N. Y.; Choi, J. W.; Kim, H. S.; Eom, H. \& Yeom, H. Y. "Optimizing the Block I/O Subsystem for Fast Storage Devices", ACM Trans. Comput. Syst., 2014.
+%
+%These techniques are orthogonal with our design. Also most of them have been incorporated by NVMe.
+%
+%[31] Kang, W.-H.; Lee, S.-W.; Moon, B.; Kee, Y.-S. \& Oh, M. "Durable Write Cache in Flash Memory SSD for Relational and NoSQL Databases", in SIGMOD, 2014.
+%
+%This paper introduces a durable cache to SSD. The resulting random write throughput is still only below 65 MB/s, in accord with our assumption.
+
 \section{软件透明的现有数据一致性机制及其性能}
+
+据我们所知，本文工作首次提出了软件透明地支持运行无修改的、遗留应用的持久性内存设计，该设计不给程序员带来特别的编程负担，亦不要求特殊的电源管理。大部分其他的持久性内存设计\cite{Volos:2011:MLP:1950365.1950379,
+Coburn:2011:NMP:1950365.1950380,
+Venkataraman:2011:CDD:1960475.1960480, Intel:PMEM, SNIA:2013:NPM,
+Zhao:2013:KCP:2540708.2540744, Moraru:2013:CDS, Kannan:2014:RCP,
+Liu:2014:NDU:2541940.2541957, Pelley:2014:MP}均要求程序员使用新的为操作持久性内存上的数据而开发的APIs，实现新的程序或者重写遗留代码。
+
+\subsection{基于软件的持久性内存设计中的API}
+持久性内存在软件社区中得到了充分的关注和研究\cite{Volos:2011:MLP:1950365.1950379,
+Coburn:2011:NMP:1950365.1950380,
+Venkataraman:2011:CDD:1960475.1960480, Intel:PMEM, SNIA:2013:NPM,
+Shapiro:1999:EFC, Chen:1996:RFC:237090.237154}。大部分前人工作都开发了应用级别或者系统级别的接口来提供故障时数据一致性的保证。例如，Mnemosyne\cite{Volos:2011:MLP:1950365.1950379}和NV-heaps\cite{Coburn:2011:NMP:1950365.1950380}采用了应用级别的编程接口用于管理持久性内存区域的数据；程序员们需要显式地声明、分配和回收持久性对象。CDDS（consistent and durable data structures）\cite{Venkataraman:2011:CDD:1960475.1960480}要求应用开发人员修改已有的数据结构以实现高效的对持久性数据的更新。EROS\cite{Shapiro:1999:EFC}
+and Rio file cache\cite{Chen:1996:RFC:237090.237154}需要系统开发人员重新实现操作系统组件来实现高效的数据持久化。Intel\cite{Intel:PMEM}和SNIA\cite{SNIA:2013:NPM}引入的新的应用程序编程接口要求程序员显式地声明持久性对象\cite{Volos:2011:MLP:1950365.1950379,
+Coburn:2011:NMP:1950365.1950380}、重新实现内存中的数据结构\cite{Venkataraman:2011:CDD:1960475.1960480}或者修改遗留代码来使用事务接口\cite{Volos:2011:MLP:1950365.1950379,Coburn:2011:NMP:1950365.1950380}。
+
+\subsection{基于硬件的持久性内存设计中的API}
+对持久性内存的硬件支持得到日益增加的关注\cite{meza2013case, Condit:2009:BIT:1629575.1629589,
+Zhao:2013:KCP:2540708.2540744, Moraru:2013:CDS, Pelley:2013:SMN,
+Kannan:2014:RCP, Liu:2014:NDU:2541940.2541957, Pelley:2014:MP,
+6378661, 6974684, Zhao:2014:FFH, justin-taco14}。这些工作大部分采用了与基于软件的持久性内存系统开发的API相似的接口。例如，Kiln\cite{Zhao:2013:KCP:2540708.2540744}使用一个基于事务的API来获得来自软件的对于关键数据的更新。Moraru等\cite{Moraru:2013:CDS}提出的设计要求程序员显式分配持久性对象。由Pelley等\cite{Pelley:2014:MP}提出的松弛持久化模型采用新的API来支持他们特殊的持久化模型。BPFS\cite{Condit:2009:BIT:1629575.1629589}在文件系统中使用非易失性内存，会带来可观的软件性能开销。
+
+\subsection{通过特殊电源管理实现的故障时数据一致性}
+全系统持久化（whole-system persistence）\cite{Narayanan:2012:WP:2150976.2151018}可以提供不增加程序员负担的故障时数据一致性，但依赖系统电源提供的残余电量（residual energy），在系统故障时冲刷CPU的缓存。该模型受限于残余电量可以冲刷的数据大小，所以无法应用于包含DRAM的混合内存系统。自动提交内存（auto-commit memory）\cite{flynn2012apparatus}使用二级电源供应，在系统失效时，将易失的数据提交到闪存中。这些额外的电源供应增加了整个系统的成本、维护难度和潜在的不可靠性。
+
+
+% Moraru
+% \emph{et al.}\cite{Moraru:2013:CDS} developed a cache-efficient
+% consistency-preserving data update scheme; however, it requires programmers to
+% explicitly allocate persistent objects with a NVM malloc function. Pelley
+% \emph{et al.}\cite{Pelley:2014:MP} introduces a relaxed persistence model to
+% minimize the ordering control overhead and enable coalesce of writes to the same
+% data; however, it employs a strand API to support their proposed strand
+% persistence model. %\vspace{0.05in}
+
+ThyNVM不要求任何应用或系统层面的新的API。所以它提供了一种让用户不修改程序即可利用持久性内存的有效方法。
+
+% Two prior studies, whole system
+% persitence~(WSP)\cite{Narayanan:2012:WP:2150976.2151018} and auto-commit
+% memory~(ACM)\cite{Ouyang:2011:BBI, flynn2012apparatus} support transparent
+% persitsence management. However, WSP requires additional interrupt handlers to
+% perform ``flush-on-fail'' in the event of system failures. Furthermore, the
+% design needs to incorporate additional hardware components, including a
+% prorammable microcontroller to monitor the status of power supply and a super
+% capacitor used as backup voltage supply when system loses power. THNVM does not
+% introduce any of the software interrupts and off-chip hardware components, and
+% therefore is a more lightweight implementation compared with whole-system
+% persistence. ACM exposes a designated DRAM region to CPU and commits updates to
+% that region to flash automatically in background. An auto-commit buffer is used
+% to buffer updates, but will become a bottleneck for memory-intensive workloads.
+% No mechanism is proposed to handle the situation when the flash throughput
+% cannot catch up with memory writes. In contrast, THNVM can overlap checkpointing
+% with program execution in a similar situation, and therefore can offer much
+% higher system performance.
+
+%% NVM Duet\cite{Liu:2014:NDU:2541940.2541957}
+%% relaxes consistency and durability guarantees for persistent store to achieve
+%% high performance in a non-volatile memory system shared by working memory and
+%% persistent memory.
+
+\subsection{检查点生成及其粒度选择}
+检查点生成是一种在不同领域广泛应用的技术\cite{466999, 5645453}。例如，ReVive\cite{1003567}、SafetyNet\cite{1003568}、
+Mona\cite{Gao:2015:RIC}以及COMA\cite{1563035}的检查点生成机制均基于CPU缓存块粒度（细粒度）生成内存数据的检查点，这些工作的应用目标是提高数据的可用性。另一些工作\cite{6468462, Oliner:2006:CCR:1183401.1183406,
+Rajachandrasekar:2014:MDC:2600212.2600713}则采用粗粒度来生成检查点。相比于它们，我们的机制采用两种不同的粒度来形成一个检查点，获得多种粒度的好处。据我们所知，本文工作首次提出根据访问模式的局部性调整检查点生成的粒度，从而实现高性能和低开销。另外，闪存转换层（flash translation layer）可以利用两种粒度\cite{Kang:2006:SFT:1176887.1176911,
+Lee:2007:LBF:1275986.1275990}但是不提供数据一致性保证，且均特定地面向闪存。
 
