@@ -18,6 +18,34 @@
 % 你可以在这里修改配置文件中的定义，导言区可以使用中文。
 % \def\myname{薛瑞尼}
 
+\usepackage{xifthen, xspace}
+\newcommand{\wa}[1][]{
+  \ifthenelse{\isempty{#1}}
+  {$W_{active}$\xspace}
+  {$W^{#1}_{active}$\xspace}
+}
+\newcommand{\cl}[1][]{
+  \ifthenelse{\isempty{#1}}
+  {$C_{last}$\xspace}
+  {$C^{#1}_{last}$\xspace}
+}
+\newcommand{\cp}[1][]{
+  \ifthenelse{\isempty{#1}}
+  {$C_{penult}$\xspace}
+  {$C^{#1}_{penult}$\xspace}
+}
+
+\usepackage{tikz, makecell, pifont}
+\input{tikz/tikz-def.tex}
+
+\newcommand*\circled[1]{\tikz[baseline=-3pt]{
+  \node[shape=circle, draw, font=\small, inner sep=0.5pt] (char) {#1};}}
+
+\newcommand{\noindentsep}{3pt}
+
+\newcommand{\state}[1]{\texttt{#1}}
+\newcommand{\region}[1]{\textsc{#1}}
+
 \begin{document}
 
 % 定义所有的eps文件在 figures 子目录下
@@ -50,6 +78,7 @@
 \include{data/chap04}
 \include{data/chap05}
 \include{data/chap06}
+\include{data/chap07}
 
 
 %%% 其它部分
