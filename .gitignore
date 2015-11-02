@@ -20,6 +20,8 @@
 *.lof
 *.lot
 *.loe
+*.fdb_latexmk
+*.fls
 dtx-style.sty
 thuthesis.cfg
 thuthesis.cls

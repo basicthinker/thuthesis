@@ -1,0 +1,54 @@
+\begin{tikzpicture}[->, >=stealth, node distance=0.37\tikzdistance, auto, thick,
+font=\footnotesize, text centered]
+
+\tikzstyle{every state}=[ellipse, inner sep=0pt]
+
+\node[state] (h) [fill={rgb:black,1;white,4}] {\state{hidden}};
+\node[state] (f) [right=of h, fill={rgb:black,1;white,4}] {\state{free}};
+\node[state] (c) [above=of h, fill={rgb:black,1;white,4}] {\state{clean}};
+\node[state] (t) [below left=of c] {\state{pre-hidden}};
+\node[state] (d) [above=of f, fill={rgb:black,1;white,4}] {\state{dirty}};
+\node[state] (s) [above right=of f] {\state{pre-dirty}};
+\node[state] (l) [below right=of f] {\state{loan}};
+
+\path (c.west)
+  edge [bend right, anchor=south]
+    node {\makecell[c]{write\\(ckpt.)\\\circled{$\mathnormal{6}$}}} (t);
+\path (c)
+  edge [anchor=east] node {\makecell[c]{write\\(exec.)\\\circled{$\mathnormal{3}$}}} (h)
+  edge [anchor=west] node {\makecell[c]{revoke\\\circled{$\mathnormal{5}$}}} (f);
+\path (h)
+  edge [anchor=north] node {\makecell[c]{BTT flush\\\circled{$\mathnormal{4}$}}} (f)
+  edge [loop, out=330, in=270, anchor=north, looseness=4]
+    node [xshift=-0.05\tikzdistance] {write (exec.)} (h);
+\path (t)
+  edge [bend right, out=300, in=240, anchor=north]
+    node [xshift=-0.1\tikzdistance] {\makecell[c]{write (exec.) $|$ clear\\\circled{$\mathnormal{7}$}}} (h)
+  edge [loop, out=210, in=150, looseness=4, anchor=south]
+    node [xshift=0.1\tikzdistance, yshift=0.15\tikzdistance]
+      {\makecell[c]{write\\(ckpt.)}} (t);
+\path (f)
+  edge [anchor=west] node {\makecell[c]{write\\(exec.)\\\circled{$\mathnormal{1}$}}} (d)
+  edge [bend right, anchor=base]
+    node [xshift=0.12\tikzdistance, yshift=-0.05\tikzdistance] {\makecell[c]{\circled{$\mathnormal{8}$}\\write (ckpt.)}} (s)
+  edge [bend right, anchor=base]
+    node [xshift=-0.2\tikzdistance, yshift=-0.1\tikzdistance] {\makecell[c]{write\\to \region{Page Cache}\\(ckpt.)}} (l);
+\path (s)
+  edge [bend right, anchor=west]
+    node [xshift=-0.15\tikzdistance, yshift=0.05\tikzdistance]
+      {\makecell[c]{write (exec.) $|$ clear\\\circled{$\mathnormal{9}$}}} (d)
+  edge [loop, out=330, in=30, anchor=north, looseness=4]
+    node [xshift=-0.12\tikzdistance, yshift=-0.1\tikzdistance]
+      {\makecell[c]{write\\(ckpt.)}} (s);
+\path (d)
+  edge node [anchor=south] {\makecell[c]{BTT flush\\\circled{$\mathnormal{2}$}}} (c)
+  edge [loop, out=60, in=120, looseness=4, anchor=south]
+    node {write (exec.)} (d);
+\path (l)
+  edge [bend right, anchor=west]
+    node {\makecell[c]{write (exec.) $|$ clear\\\circled{$\mathnormal{10}$}}} (f)
+  edge [loop, out=330, in=30, looseness=4, anchor=north]
+    node [anchor=west] {\makecell[c]{write\\(ckpt.)}} (l);
+
+\end{tikzpicture}
+
