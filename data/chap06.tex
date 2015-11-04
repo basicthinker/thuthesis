@@ -1,4 +1,4 @@
-\chapter{一致性协议及其证明}
+\chapter{软件透明的一致性协议及其证明}
 \label{chap:protocol}
 
 本章描述ThyNVM双模式检查点生成技术使用的基于状态机的数据一致性协议，以及协议的形式化证明。
@@ -89,6 +89,13 @@ ThyNVM使用两个地址转换表，\emph{块转换表}（BTT）和\emph{页转�
 
 最后我们有一个用于两个模式间合作的状态。当页回写模式生成脏页的检查点时，对这些页的各个内存写暂由块重映射模式重定向到块缓存区域（与第\ref{subsec:states-ckpt}节介绍的操作类似）。我们不把这些BTT表项混入上文的那些状态和转换，所以这些表项被标记为\state{loan}。当检查点生成结束这些页面重新可以被直接修改的时候，\state{Loan}态的表项最终将数据移回原页中（状态转换\circled{$\mathnormal{10}$}）。
 
-\end{itemize}
+\section{系统抽象}
 
+\subsection{数据结构的抽象}
+
+\subsection{程序行为的抽象}
+
+\section{证明步骤}
+
+\end{itemize}
 
