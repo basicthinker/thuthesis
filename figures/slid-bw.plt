@@ -1,5 +1,4 @@
-set terminal pdfcairo enhanced font "Times New Roman,16"
-set size 1,1
+set terminal pdfcairo enhanced mono font "Times New Roman,16" size 5,3.5
 
 set output "slid-bw.pdf"
 
@@ -17,7 +16,7 @@ set y2label '% 检查点生成时间'
 set y2range [0:100]
 set y2tic
 
-set key below box
+set key below box spacing 1.25
 plot 'slid-bw.data' using 2:xtic(1) axes x1y1 ls 1 title "CPU", \
     '' using 3:xtic(1) axes x1y1 ls 1 title "数据迁移", \
     '' using 4:xtic(1) axes x1y1 ls 1 title "检查点生成", \
