@@ -5,17 +5,17 @@
 
 \section{地址空间管理}
 
-ThyNVM使用两个地址转换表，\emph{块转换表}（BTT）和\emph{页转换表}，来维护从物理地址空间到硬件地址空间的映射。
+ThyNVM使用两个地址转换表，\emph{块转换表}（BTT）和\emph{页转换表}（PTT），来维护从物理地址空间到硬件地址空间的映射。
 
 每个物理地址在NVM上有一个对应的固定的\emph{主硬件地址}。所以，确定一个物理地址的主硬件地址不需要经过BTT或PTT进行地址转换。不失一般性，我们假定主硬件地址和物理地址相等。与此同时，任何物理地址都可以通过BTT或PTT被\emph{动态地}映射到一个NVM上的不同的硬件地址，映射方式取决于ThyNVM检查点生成模式的规则。
 
-为了方便内存管理，我们将硬件地址空间划分为六个有不同用途的区域。图~\ref{fig-addr-space}描绘了ThyNVM地址空间的组织形式。下面我们描述每个区域的用途。
+为了方便内存管理，我们将硬件地址空间划分为六个有不同用途的区域。图~\ref{fig:addr-space-detail}描绘了ThyNVM地址空间的组织形式。下面我们描述每个区域的用途。
 
 \begin{figure}[!h]
 \centering
-\includegraphics[width=0.6\linewidth]{figures/addr-space.pdf}
+\includegraphics[width=0.6\linewidth]{addr-space-detail}
 \caption{ThyNVM的物理和硬件地址空间。}
-\label{fig-addr-space}
+\label{fig:addr-space-detail}
 \end{figure}
 
 \section{地址转换状态机}
