@@ -18,7 +18,7 @@ ThyNVM的设计有两个本质特性，软件透明和检查点生成。本节�
 \subsection{软件一致性保障技术的缺陷}
 
 \begin{figure}[!h]
-\centering \includegraphics[width=0.9\linewidth]{motivation-code}
+\centering \includegraphics[width=0.85\linewidth]{motivation-code}
   \caption{实例代码：向持久化的哈希表中插入一个项。分别采用（a）传统的软件接口或（b）软件透明的ThyNVM。}
 \label{fig:motivation-code}
 \end{figure}
@@ -373,6 +373,82 @@ ext4}来保证数据的一致性。我们的实现遵照~\cite{Remzi:Journaling}
 \section{讨论}
 \label{sec:thnvm-discuss}
 
+\subsection{与全系统持久化的对比}
+ThyNVM的模型和目标与全系统持久化（WSP）\cite{Narayanan:2012:WP:2150976.2151018}的模型和目标有很大不同。WSP的目标是支持全系统状态的恢复，\emph{包括设备状态}。然而，ThyNVM的目标是支持仅\emph{内存数据}的故障时一致性。ThyNVM不处理设备状态，将外部设备状态的恢复交由系统软件（如下所述）。 WSP假设一个全NVM配置从而只需要在电源故障时只刷出CPU的状态而不必要管非易失性的DRAM状态。
+ThyNVM assumes
+a DRAM+NVM hybrid memory that can offer better performance than NVM
+alone~\cite{Qureshi:2009:SHP:1555754.1555760, 6378661}, but requires
+periodic checkpointing of both CPU states and memory data to provide
+crash consistency. Unlike WSP, ThyNVM provides crash consistency of
+memory data {\em without requiring or assuming} purely nonvolatile
+memory.
+
+\subsection{故障时外部状态丢失问题}
+ThyNVM does not
+protect external states (e.g., in the network card).  These states are
+lost after system reboots, leading to device errors during
+recovery. As such, system failure events are \emph{visible} to
+programs in the form of device errors. Device errors are common in
+computer systems
+\cite{Ghemawat:2003:GFS:945445.945450,Ford:2010:AGD:1924943.1924948}. Commodity systems already incorporate
+mechanisms to handle such errors~\cite{cpp:exceptions, Robillard:1999:AEF:318773.319251, Ogasawara:2006:EEO:1111596.1111598}. This
+failure model we assume is inline with many previous works, e.g.,
+\cite{1003568,1003567,Goodenough:1975:EHI:361227.361230,4222585}.
+
+\subsection{软件程序错误}
+
+Software bugs can lead to system
+crashes by corrupting memory states. Yet, crash consistency and bug
+tolerance are two different problems.  Any system that maintains crash
+consistency, including databases and file systems that do so, is
+susceptible to software bugs; ThyNVM is not different. For example,
+{bugs in commonly-used software, e.g., Eclipse (a widely used
+development suite) and Chromium (a popular browser), have caused data
+corruption in \emph{databases} and \emph{file
+systems}~\cite{eclipse:bug,chrom:bug}}. ThyNVM provides crash
+consistency, and it cannot (and is not designed to) prevent such
+software bugs. However, it can be extended to help enhance bug
+tolerance, e.g., by copying checkpoints to secondary storage
+periodically and devising mechanisms to find and recover to past
+bug-free checkpoints. Studies of such mechanisms can open up
+attractive new research directions for future work building
+upon ThyNVM.
+
+\subsection{显式持久化接口}
+Our checkpointing mechanism can be seamlessly integrated in a system
+with a configurable persistence
+guarantee~\cite{Ports:2010:TCA:1924943.1924963,
+Cipar:2012:LTF:2168836.2168854,
+Mickens:2014:BFC:2616448.2616473}. Such a system is only allowed to
+lose data updates that happened in the last $n$~ms, where $n$ is
+configurable. ThyNVM can be configured to checkpoint data every $n$ ms
+and roll back to the last consistent checkpoint after a crash.
+Persistence of data can also be explicitly triggered by the program
+via a new instruction added to the ISA that forces ThyNVM to end an
+epoch.
+
 \section{本章小结}
+
+We introduce a software-transparent mechanism that provides crash
+consistency of memory data for persistent and hybrid memory
+systems. Our design, ThyNVM, is based on automatic periodic
+checkpointing of the main memory state in a manner that minimally
+impacts application execution time. To this end, we introduce a new
+dual-scheme checkpointing mechanism that efficiently overlaps
+checkpointing and application execution by (1)~adapting the
+granularity of checkpointing to the spatial locality of memory updates
+and (2)~providing mechanisms to coordinate memory updates with two
+different granularities of checkpointing. Our evaluations using
+multiple different access patterns, realistic storage workloads, and
+compute-bound workloads show that ThyNVM provides crash consistency of
+memory data at low overhead, with performance close to an ideal system
+that provides crash consistency at no performance overhead. We
+believe ThyNVM's efficient support for software-transparent crash
+consistency can enable (1)~easier and more widespread adoption of
+persistent memory, and (2)~more efficient software stack support for
+exploiting persistent memory. We hope that our work encourages more
+research in providing automatic and programmer-friendly mechanisms for
+managing persistent and hybrid memories. To foster such research, we
+have open sourced ThyNVM at \url{http://persper.com/thynvm}.
 
 
