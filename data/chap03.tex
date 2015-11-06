@@ -50,7 +50,16 @@ Mickens:2014:BFC:2616448.2616473}在不同领域利用了相似的分离手段�
 
 \textbf{原理1} 当前手机内存DRAM的容量足够支持应用数据存储。
 
-手机内存DRAM的容量经历了快速的增长（自2010年以来8倍增长，从512~MB到4~GB），当前标配已达到2~GB或更多。而该DRAM大小已经可以支持在桌面电脑上运行Windows XP系统。尽管手机应用的数据量需求也在增长，但其增长率相对较低。我们以网页请求的大小为例，其自2010年以来的同期增长率仅为94\%~\cite{HTTP:Transfer:2013}。此外，手机环境下限于屏幕大小，用户通常只使用一两个应用，活跃的数据量有限。进一步的评测参见\ref{vct:mem-fp}节。
+手机内存DRAM的容量经历了快速的增长（自2010年以来8倍增长，从512~MB到4~GB，如图\ref{fig:mem-inc}所示），当前标配已达到2~GB或更多。而该DRAM大小已经可以支持在桌面电脑上运行Windows XP系统。尽管手机应用的数据量需求也在增长，但其增长率相对较低。我们以网页请求的大小为例，其自2010年以来的同期增长率仅为94\%\cite{HTTP:Transfer:2013}。此外，手机环境下限于屏幕大小，用户通常只使用一两个应用，活跃的数据量有限。进一步的评测参见\ref{vct:mem-fp}节。
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.9\linewidth]{mem-inc}
+  \caption{手机内存容量的增长。}
+  \label{fig:mem-inc}
+\end{figure}
+
+
 
 \textbf{原理2} 手机内存可以被视作可靠的数据存储。
 
@@ -176,7 +185,7 @@ interval}}态，用于减少和增加间隔预期。
 
 \begin{figure}[!h]
   \centering
-  \includegraphics[width=0.95\linewidth]{state-machine}
+  \includegraphics[width=0.9\linewidth]{state-machine}
   \caption{间隔预测算法的有限状态机}
   \label{fig-state-machine}
 \end{figure}
