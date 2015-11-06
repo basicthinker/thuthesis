@@ -328,13 +328,14 @@ MobiFS聚焦在两个可以提升应用响应度的因素：尽量小的响应�
 \begin{table}[!ht]
 \caption{在Android的Ext4和MobiFS上运行AnTuTu（ATT）和RL基准测试集获得的性能和能量数据。ATT的评分越高越好；RL基准测试集的执行时间越少越好。}
 \label{tbl:micro-bench}
-\begin{tabular}{p{0.45in}|p{0.45in}|*{2}{p{0.5in}}p{0.35in}}
+\centering
+\begin{tabular}{c|c|rrr}
  \hline
- \multicolumn{2}{c|}{项目} & Ext4 & MobiFS & 提升\\
+ \multicolumn{2}{c|}{\heiti 项目} & {\heiti Ext4} & {\heiti MobiFS} & {\heiti 提升}\\
  \hline
  \multirow{2}{*}{性能} & ATT评分 & 689.9$\pm$21.5 & 1817$\pm$51.0 & +163\% \\
  \cline{2-5}
- & RL(sec.) & 38.6$\pm$0.4 & 19.1$\pm$0.4 & -50.1\% \\
+ & RL（秒） & 38.6$\pm$0.4 & 19.1$\pm$0.4 & -50.1\% \\
  \hline
  \multirow{2}{*}{能量(J)} & ATT & 24.3$\pm$0.8 & 20.3$\pm$0.7 & -16.4\% \\
  \cline{2-5}
