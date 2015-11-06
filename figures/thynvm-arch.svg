@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="thynvm-arch.svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.32"
+     inkscape:cx="127.91243"
+     inkscape:cy="861.94089"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1855"
+     inkscape:window-height="1056"
+     inkscape:window-x="65"
+     inkscape:window-y="24"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#cccccc;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       id="rect3757"
+       width="213.60942"
+       height="21.107737"
+       x="159.46466"
+       y="119.14333" />
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+       x="232.81482"
+       y="135.4733"
+       id="text3759"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3761"
+         x="232.81482"
+         y="135.4733">共享的LLC</tspan></text>
+    <rect
+       style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       id="rect3763"
+       width="254.41614"
+       height="106.61495"
+       x="137.04376"
+       y="152.94469"
+       ry="0" />
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+       x="310.07745"
+       y="182.01913"
+       id="text3765"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="310.07745"
+         y="182.01913"
+         id="tspan3064"
+         style="font-weight:normal;-inkscape-font-specification:'Times New Roman,'">内存控制器</tspan></text>
+    <rect
+       style="fill:#cccccc;stroke:#000000;stroke-width:0.86396545000000002;stroke-opacity:1"
+       id="rect2985"
+       width="57.173073"
+       height="39.136036"
+       x="160.15422"
+       y="69.77565" />
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;line-height:100%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+       x="169"
+       y="93.362183"
+       id="text3813"
+       sodipodi:linespacing="100%"><tspan
+         sodipodi:role="line"
+         x="169"
+         y="93.362183"
+         id="tspan3817"
+         style="font-size:14px;line-height:100%">CPU核</tspan></text>
+    <rect
+       y="69.77565"
+       x="224.15421"
+       height="39.136036"
+       width="57.173077"
+       id="rect3827"
+       style="fill:#cccccc;stroke:#000000;stroke-width:0.86396545000000002;stroke-opacity:1" />
+    <text
+       sodipodi:linespacing="100%"
+       id="text3829"
+       y="93.362183"
+       x="232.50014"
+       style="font-size:14px;font-style:normal;font-weight:normal;line-height:100%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+       xml:space="preserve"><tspan
+         style="font-size:14px;line-height:100%"
+         id="tspan3833"
+         y="93.362183"
+         x="232.50014"
+         sodipodi:role="line">CPU核</tspan></text>
+    <rect
+       style="fill:#cccccc;stroke:#000000;stroke-width:0.86396545000000002;stroke-opacity:1"
+       id="rect3837"
+       width="57.173077"
+       height="39.136036"
+       x="316.15421"
+       y="69.77565" />
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;line-height:100%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+       x="325"
+       y="93.362183"
+       id="text3839"
+       sodipodi:linespacing="100%"><tspan
+         sodipodi:role="line"
+         x="325"
+         y="93.362183"
+         id="tspan3843"
+         style="font-size:14px;line-height:100%">CPU核</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:22px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+       x="285"
+       y="91.362183"
+       id="text3845"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3847"
+         x="285"
+         y="91.362183"
+         style="font-size:36px">...</tspan></text>
+    <path
+       inkscape:connector-curvature="0"
+       id="path3855"
+       d="m 189.21951,118.57357 0,-9.7561"
+       style="fill:none;stroke:#000000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       sodipodi:nodetypes="cc" />
+    <rect
+       style="fill:#cccccc;stroke:#000000;stroke-width:0.89815986;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       id="rect3871"
+       width="61.101841"
+       height="55.101841"
+       x="62.449081"
+       y="204.31126" />
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;line-height:100%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+       x="71.496742"
+       y="236.72878"
+       id="text3873"
+       sodipodi:linespacing="100%"><tspan
+         sodipodi:role="line"
+         x="71.496742"
+         y="236.72878"
+         id="tspan3877"
+         style="font-size:14px;line-height:100%">DRAM</tspan></text>
+    <path
+       sodipodi:nodetypes="cc"
+       style="fill:none;stroke:#000000;stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 267.21951,139.56544 0,13.82113"
+       id="path3887"
+       inkscape:connector-curvature="0" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path3889"
+       d="m 124.00739,230.86331 13.63637,0.12932"
+       style="fill:none;stroke:#000000;stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       sodipodi:nodetypes="cc" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path3855-2"
+       d="m 253.54546,118.48266 0,-9.7561"
+       style="fill:none;stroke:#000000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       sodipodi:nodetypes="cc" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path3855-2-2"
+       d="m 345.54546,118.48266 0,-9.7561"
+       style="fill:none;stroke:#000000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       sodipodi:nodetypes="cc" />
+    <g
+       id="g4021"
+       transform="translate(118,4)">
+      <g
+         style="stroke-width:0.93363339;stroke-miterlimit:4;stroke-dasharray:none"
+         transform="matrix(0.74547802,0,0,0.53554211,-20.740786,88.922936)"
+         id="g3143">
+        <rect
+           y="-191.05251"
+           x="107.44968"
+           height="10.185185"
+           width="28.245771"
+           id="rect3773"
+           style="fill:none;stroke:#000000;stroke-width:0.93363339;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+           transform="scale(1,-1)" />
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:0.93363339;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+           id="rect3775"
+           width="28.245771"
+           height="10.185185"
+           x="136.00795"
+           y="-191.05251"
+           transform="scale(1,-1)" />
+        <rect
+           y="-181.05249"
+           x="107.44968"
+           height="10.185185"
+           width="28.245771"
+           id="rect3777"
+           style="fill:none;stroke:#000000;stroke-width:0.93363339;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+           transform="scale(1,-1)" />
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:0.93363339;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+           id="rect3779"
+           width="28.245771"
+           height="10.185185"
+           x="136.00795"
+           y="-181.05249"
+           transform="scale(1,-1)" />
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:0.93363339;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+           id="rect3781"
+           width="28.245771"
+           height="10.185185"
+           x="107.44968"
+           y="-171.05249"
+           transform="scale(1,-1)" />
+        <rect
+           y="-171.05249"
+           x="136.00795"
+           height="10.185185"
+           width="28.245771"
+           id="rect3783"
+           style="fill:none;stroke:#000000;stroke-width:0.93363339;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+           transform="scale(1,-1)" />
+      </g>
+      <text
+         sodipodi:linespacing="100%"
+         id="text3859"
+         y="170.3134"
+         x="68.650406"
+         style="font-size:14px;font-style:normal;font-weight:normal;line-height:100%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+         xml:space="preserve"><tspan
+           id="tspan3031"
+           style="font-size:14px;font-style:normal;line-height:100%;-inkscape-font-specification:'Times New Roman,'"
+           y="170.3134"
+           x="68.650406"
+           sodipodi:role="line">地址转换表</tspan></text>
+      <text
+         sodipodi:linespacing="125%"
+         id="text3967"
+         y="187.69551"
+         x="28.303032"
+         style="font-size:14px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+         xml:space="preserve"><tspan
+           y="187.69551"
+           x="28.303032"
+           id="tspan3969"
+           sodipodi:role="line"
+           style="font-style:italic;-inkscape-font-specification:'Times New Roman, Bold Italic';font-weight:bold">BTT</tspan></text>
+      <text
+         sodipodi:linespacing="125%"
+         id="text3971"
+         y="187.69551"
+         x="154.54546"
+         style="font-size:14px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+         xml:space="preserve"><tspan
+           y="187.69551"
+           x="154.54546"
+           id="tspan3973"
+           sodipodi:role="line"
+           style="font-style:italic;-inkscape-font-specification:'Times New Roman, Bold Italic';font-weight:bold">PTT</tspan></text>
+      <g
+         style="stroke-width:0.93363339;stroke-miterlimit:4;stroke-dasharray:none"
+         transform="matrix(0.74547802,0,0,0.53554211,28.392211,89.279759)"
+         id="g3143-0">
+        <rect
+           y="-191.05251"
+           x="107.44968"
+           height="10.185185"
+           width="28.245771"
+           id="rect3773-1"
+           style="fill:none;stroke:#000000;stroke-width:0.93363339;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+           transform="scale(1,-1)" />
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:0.93363339;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+           id="rect3775-7"
+           width="28.245771"
+           height="10.185185"
+           x="136.00795"
+           y="-191.05251"
+           transform="scale(1,-1)" />
+        <rect
+           y="-181.05249"
+           x="107.44968"
+           height="10.185185"
+           width="28.245771"
+           id="rect3777-8"
+           style="fill:none;stroke:#000000;stroke-width:0.93363339;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+           transform="scale(1,-1)" />
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:0.93363339;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+           id="rect3779-0"
+           width="28.245771"
+           height="10.185185"
+           x="136.00795"
+           y="-181.05249"
+           transform="scale(1,-1)" />
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:0.93363339;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+           id="rect3781-8"
+           width="28.245771"
+           height="10.185185"
+           x="107.44968"
+           y="-171.05249"
+           transform="scale(1,-1)" />
+        <rect
+           y="-171.05249"
+           x="136.00795"
+           height="10.185185"
+           width="28.245771"
+           id="rect3783-3"
+           style="fill:none;stroke:#000000;stroke-width:0.93363339;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+           transform="scale(1,-1)" />
+      </g>
+      <rect
+         y="155.39247"
+         x="25"
+         height="40.15152"
+         width="159.84846"
+         id="rect4019"
+         style="fill:none;stroke:#000000;stroke-opacity:1" />
+    </g>
+    <g
+       id="g4170"
+       transform="translate(10,-32.590912)">
+      <g
+         id="g4110">
+        <text
+           xml:space="preserve"
+           style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+           x="155.27274"
+           y="255.33188"
+           id="text4044"
+           sodipodi:linespacing="125%"><tspan
+             sodipodi:role="line"
+             x="155.27274"
+             y="255.33188"
+             id="tspan4048">DRAM读队列</tspan></text>
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+           id="rect4083"
+           width="111.36364"
+           height="18.939394"
+           x="136.36363"
+           y="241.75612" />
+      </g>
+      <g
+         id="g4110-1"
+         transform="translate(124.10606,21.621215)">
+        <text
+           xml:space="preserve"
+           style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+           x="159.27274"
+           y="255.33188"
+           id="text4044-6"
+           sodipodi:linespacing="125%"><tspan
+             sodipodi:role="line"
+             x="159.27274"
+             y="255.33188"
+             id="tspan4048-0">NVM写队列</tspan></text>
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+           id="rect4083-9"
+           width="111.36364"
+           height="18.939394"
+           x="136.36363"
+           y="241.75612" />
+      </g>
+      <g
+         id="g4110-3"
+         transform="translate(124.10606,-0.37878467)">
+        <text
+           xml:space="preserve"
+           style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+           x="159.27274"
+           y="255.33188"
+           id="text4044-9"
+           sodipodi:linespacing="125%"><tspan
+             sodipodi:role="line"
+             x="159.27274"
+             y="255.33188"
+             id="tspan4048-78">NVM读队列</tspan></text>
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+           id="rect4083-0"
+           width="111.36364"
+           height="18.939394"
+           x="136.36363"
+           y="241.75612" />
+      </g>
+      <g
+         id="g4110-35"
+         transform="translate(0.106063,21.621215)">
+        <text
+           xml:space="preserve"
+           style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+           x="155.27274"
+           y="255.33188"
+           id="text4044-0"
+           sodipodi:linespacing="125%"><tspan
+             sodipodi:role="line"
+             x="155.27274"
+             y="255.33188"
+             id="tspan4048-2">DRAM写队列</tspan></text>
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+           id="rect4083-7"
+           width="111.36364"
+           height="18.939394"
+           x="136.36363"
+           y="241.75612" />
+      </g>
+      <rect
+         y="237.96825"
+         x="133.33333"
+         height="48.484848"
+         width="242.42424"
+         id="rect4168"
+         style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
+    </g>
+    <rect
+       style="fill:#cccccc;stroke:#000000;stroke-width:0.94050306;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       id="rect3871-9"
+       width="61.059498"
+       height="55.059498"
+       x="405.14465"
+       y="204.33243" />
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;line-height:100%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+       x="418.68457"
+       y="234.65027"
+       id="text3873-3"
+       sodipodi:linespacing="100%"><tspan
+         sodipodi:role="line"
+         x="418.68457"
+         y="234.65027"
+         id="tspan3877-9"
+         style="font-size:14px;line-height:100%">NVM</tspan></text>
+    <path
+       inkscape:connector-curvature="0"
+       id="path3889-3"
+       d="m 390.96969,228.81268 13.63637,0.12932"
+       style="fill:none;stroke:#000000;stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="122.72727"
+       y="322.81674"
+       id="text3070"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3072"
+         x="122.72727"
+         y="322.81674" /></text>
+  </g>
+</svg>

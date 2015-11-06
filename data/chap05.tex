@@ -61,16 +61,16 @@ CPU缓存在块粒度上（典型配置为64字节）管理数据；操作系统
 
 \begin{figure}[!h]
 \centering
-\includegraphics[width=0.9\linewidth]{arch}
+\includegraphics[width=0.8\linewidth]{thynvm-arch}
 \caption{ThyNVM的总体架构图。}
-\label{fig-arch}
+\label{fig:thynvm-arch}
 \end{figure}
 
 ThyNVM采用DRAM和NVM的混合架构，基于硬件实现，提供软件透明的故障时数据一致性保障。ThyNVM以透明于应用程序的方式保障所有内存数据在故障时的一致性。为了利用在不同粒度持久化数据带来的不同特性，我们提出了一种新的双模式检查点生成机制。它可以同时在两个粒度上生成内存数据的检查点：分散的写在缓存块粒度上生成检查点，使用块重映射模式（第\ref{subsec:block-remap}节）；集中的写在页粒度上生成检查点，使用页回写模式（第\ref{subsec:page-writeback}节）。
 
 另外，我们提出了两种机制来协调双模式检查点生成（第\ref{subsec:coordination}节）。第一，我们允许相对较快的块重映射模式来暂时接管原本应该由较慢的页回写模式处理的写。这样做可以显著减少检查点生成阻塞程序执行的时间。第二，我们定期地依据程序执行时访问内存的特点在两种模式之间迁移数据页。这样做可以有效保证检查点生成模式和其处理的写的行为相匹配。
 
-图\ref{fig-arch}绘制了ThyNVM架构总览。DRAM和NVM部署在内存总线上，并映射到同一个物理内存地址空间中。该地址空间暴露给操作系统。我们更改了内存控制器，增加了一个检查点生成控制器，和两个用于维护内存访问元数据的地址转换表。这两个表分别是在缓存块粒度和页粒度管理元数据的块转换表（block translation table，BTT）和页转换表（page translation table，PTT）。
+图\ref{fig:thynvm-arch}绘制了ThyNVM架构总览。DRAM和NVM部署在内存总线上，并映射到同一个物理内存地址空间中。该地址空间暴露给操作系统。我们更改了内存控制器，增加了一个检查点生成控制器，和两个用于维护内存访问元数据的地址转换表。这两个表分别是在缓存块粒度和页粒度管理元数据的块转换表（block translation table，BTT）和页转换表（page translation table，PTT）。
 
 \subsection{系统定义}
 
@@ -79,7 +79,8 @@ ThyNVM采用DRAM和NVM的混合架构，基于硬件实现，提供软件透明�
 \begin{figure}[!h]
 \centering
 \includegraphics[width=0.9\linewidth]{epoch-before}\\
-{\small (a) 采用检查点生成时暂停全系统的时间单元模型}
+{\small (a) 采用检查点生成时暂停全系统的时间单元模型}\\
+\vspace{10pt}
 \includegraphics[width=0.9\linewidth]{epoch-after}\\
 {\small (b) ThyNVM采用的时间单元模型，可将检查点生成和程序执行相互重叠。该模型维护三个版本的数据：活跃的工作数据（$W_{active}$）、最近检查点数据（$C_{last}$），和次近检查点数据（$C_{penult}$）。\hfill}
 \caption{检查点生成系统的时间单元模型。}
@@ -177,7 +178,7 @@ ThyNVM地址空间管理的目标包括（1）在不同的内存位置存放数�
 
 \begin{figure}[!h]
 \centering
-\includegraphics[width=0.9\linewidth]{flow}
+\includegraphics[width=0.95\linewidth]{flow}
 \caption{流程图：\textbf{（a）}在某个时间单元的执行阶段服务一个写请求；\textbf{（b）}在该时间单元的检查点生成阶段生成检查点。为了显示（a）中写入的数据和（b）中检查点数据的关联关系，我们用三个背景方格标记出两种检查点生成模式和它们之间的合作：每个背景方格内，在（a）中存储的数据，在生成检查点的时候，会经历（b）中对应的处理过程。}
 \label{fig:flow}
 \end{figure}
