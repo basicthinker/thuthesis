@@ -1,19 +1,26 @@
 \chapter{双模式检查点生成技术}
 \label{chap:thynvm}
 
-新兴的字节编址的（byte-addressable）非易失性内存介质，诸如STT-RAM~\cite{4443191}、PCM~\cite{Raoux:2008:PRA}和ReRAM~\cite{5607274}等预示着持久化内存系统，一个在内存和存储栈上的新的中间层。持久化内存系统融合了传统内存系统（快速的load/store指令接口）和存储系统（数据持久化）的优良特性，模糊了两者之间的界限。它给应用带来的一个重要的益处是，可以通过load/store指令高效地直接地访问内存中的持久化数据，而不需要与存储设备进出换页、在（反）序列化时更改数据格式以及触发臃肿的系统调用。
+新兴的字节编址的（byte-addressable）非易失性内存介质，诸如STT-RAM~\cite{4443191,sttmram-ispass13}、PCM~\cite{Raoux:2008:PRA,lee-main-memory}和ReRAM~\cite{5607274}等，预示着持久化内存系统，一个在内存和存储栈上的新的中间层。持久化内存系统融合了传统内存系统（快速的load/store指令接口）和存储系统（数据持久化）的优良特性，模糊了两者之间的界限。它给应用带来的一个重要的益处是，可以通过load/store指令高效地直接地访问内存中的持久化数据，而不需要与存储设备进出换页、在（反）序列化时更改数据格式以及触发臃肿的系统调用~\cite{meza2013}。
 
-持久化内存相对于传统的易失性内存系统引入了一个关键的要求，系统故障时的一致性保证~\cite{Lamb:1991:ODS,Copeland:1989:CSR,Shapiro:1999:EFC:319151.319163}。这要求持久化内存系统，在掉电或系统失效等故障出现时，依然能够保证数据的一致性不受部分或是乱序的NVM写的影响。我们以原子性地更新保存在NVM上的数据结构A和B为例，总会有对A或B的一个更改会先于其他写入NVM。如果系统在一个更改完成之后出现故障或掉电，两个数据结构可能处于不一致的中间状态，只包含部分更改。对于传统易失性内存，这不是一个问题，因为程序恢复后内存中的数据都会丢失。但对于持久化内存，这些不一致的数据会一直保留。所以，持久化内存系统需要保证保存到NVM的数据可以在系统重启后恢复到一个一致的状态，即维持数据的一致性。维持数据的一致性原本仅是对磁盘或闪存等存储系统的要求，但将数据持久化引入内存后，它即成为内存系统同样面临的一个挑战。
+持久化内存相对于传统的易失性内存系统引入了一个关键的要求，系统故障时的一致性保证~\cite{Lamb:1991:ODS,Copeland:1989:CSR,Shapiro:1999:EFC:319151.319163}。这要求持久化内存系统，在掉电或系统失效等故障出现时，依然能够保证数据的一致性不受部分的或是乱序的NVM写的影响。我们以原子性地更新保存在NVM上的数据结构A和B为例，总会有对A或B的一个更改会先于另一个写入NVM。如果系统在一个更改完成之后出现故障或掉电，两个数据结构可能处于不一致的中间状态，只包含部分更改。对于传统易失性内存，这不是一个问题，因为程序恢复后内存中的数据都会丢失。但对于持久化内存，这些不一致的数据会一直保留。所以，持久化内存系统需要保证保存到NVM的数据可以在系统重启后恢复到一个一致的状态，即维持数据的一致性。维持数据的一致性原本仅是对磁盘或闪存等存储系统的要求，但将数据持久化引入内存后，它即成为内存系统同样面临的一个挑战。
 
-大多数之前的持久化内存设计依赖于程序员的人工努力来保证系统故障时的数据一致性。应用的开发人员需要显式地使用特定的编程模型和软件接口来访问和操作内存中的持久化数据。这些软件接口构建于为持久化内存定制的运行时库~\cite{Condit:2009:BIT:1629575.1629589,Volos:2011:MLP:1950365.1950379}或硬件架构~\cite{Zhao:2013:KCP:2540708.2540744}。这种设计似乎给程序员提供了对数据持久化的完全控制，但要求程序员管理持久化内存会带来至少三方面不良影响。首先，应用开发者必须用新的编程接口API来实现程序或者深度更改遗留代码，通常要显式地声明和划分持久的和临时数据结构。其次，大多数之前的持久化内存设计需要使用事务性内存控制版本和对NVM写的顺序，而事务性内存的扩展性依然面临挑战。第三，现在持久性内存的编程模型可能基于很多种语义和软件接口实现，会带来兼容性和移植性问题。为此，我们工作的目标是设计高效的故障时数据一致性保障机制，使得持久化内存的使用范围得到扩展而不必需要复杂的应用更改。
+大多数之前的持久化内存设计依赖于程序员的人工努力来保证系统故障时的数据一致性\cite{
+  Volos:2011:MLP:1950365.1950379, Coburn:2011:NMP:1950365.1950380,
+  Venkataraman:2011:CDD:1960475.1960480, Intel:PMEM,
+  Zhao:2013:KCP:2540708.2540744, Pelley:2014:MP}。应用的开发人员需要显式地使用特定的编程模型和软件接口来访问和操作内存中的持久化数据，以保护数据一致性不受部分写或是乱序写的影响。这种方式似乎给程序员提供了对数据持久化的完全控制，但要求程序员使用新接口管理持久化内存会带来至少三方面不良影响。首先，程序员必须用新的编程接口API来实现程序或者深度更改遗留代码，通常要显式地声明和划分持久的和临时数据结构。其次，已经部署在各种系统中的使用遗留代码的应用无法利用持久性内存系统。第三，大多数之前的持久化内存设计需要使用事务性内存控制版本和对NVM写的顺序，而事务性内存的扩展性依然面临挑战\cite{Cascaval:2008:STM:1454456.1454466, Pankratius:2011:STM:1989493.1989500, Dice:2009:EEC:1508244.1508263}。第四，持久性内存应用的实现依赖特定的软件接口和运行时系统\cite{Volos:2011:MLP:1950365.1950379, Coburn:2011:NMP:1950365.1950380, Venkataraman:2011:CDD:1960475.1960480, Intel:PMEM, SNIA:2013:NPM}，会带来跨系统的兼容性和移植性问题
 
-我们提出了ThyNVM，一种新的支持对软件透明的故障时数据一致性的持久化内存设计。它允许基于事务的和基于锁的程序直接在持久化内存硬件上运行。ThyNVM使用DRAM和NVM混合的架构和高效的硬件辅助的检查点生成技术来达到DRAM水平的性能。这里的一个关键挑战是减少由于生成检查点而导致的应用停滞时间。我们发现，在停滞时间和元数据存储开销之间存在一个折衷。在较小的粒度上生成检查点，带来的停滞时间可以比较短，而对应元数据占用的空间却会非常大；在较大的粒度上生成检查点，可以降低元数据占用的空间，但是会导致较长的停滞时间。因此，单一的检查点生成技术（或者基于小粒度或者基于大粒度）难以达到最优的效果。为了解决这一问题，我们提出了双模式检查点生成机制，它可以同步地为分散的和集中的内存写分别基于CPU缓存块粒度和操作系统页粒度生成检查点。与先前使用写时拷贝（copy-on-write，COW）或日志技术的持久化内存设计相比，ThyNVM显著减小了存储的损耗并增加了内存带宽的利用率。
+本章工作的\textbf{目标}是为持久性内存系统设计高效的\emph{对软件透明的}故障时数据一致性保证机制。我们希望这样的设计可以使更多持久性内存的用例成为可能（如用于不修改的遗留程序或者非事务性的程序），并允许更多的程序员使用持久性内存系统而不必更改应用来保证数据一致性。
 
-特别地，本章工作做出了如下几点贡献：（1）我们提出了一种新的持久化内存设计，支持对软件透明的故障时数据一致性保障。我们的设计允许基于事务的和基于锁的应用通过load/store指令接口使用持久化内存。（2）对于生成检查点的粒度，我们定位了程序停滞时间和元数据空间占用之间的权衡关系。在任意一个粒度上追踪对持久化内存的更改都不是最优的。（3）我们设计了一个新的双模式检查点生成技术。我们的技术比页粒度的检查点生成机制减少了86.2\%的停滞时间，而仅比缓存块粒度的检查点生成机制多用26\%的内存控制器硬件空间。（4）我们在内存模拟器上实现了双模式检查点生成机制，使用我们经过形式化证明的一致性协议。它可以在保证数据一致性的同时，将检查点生成过程和程序执行重叠。我们的解决方案可以达到不提供一致性支持的全DRAM系统性能的95.1\%。
+为此，我们提出了ThyNVM，一种新的支持对软件透明的故障时数据一致性的基于DRAM和NVM混合架构的持久化内存系统。它允许基于事务的和非事务性的程序直接在持久化内存硬件上运行，而且获得完整的故障时数据一致性支持。ThyNVM通过定期地在硬件辅助下生成检查点来保证系统在故障时可以恢复到一个一致的内存状态。然而，一般的检查点生成技术需要在将数据持久化到NVM的过程中令整个系统停顿。减少由于使用检查点生成技术导致的程序停顿是此类系统面临的关键挑战。
+
+ThyNVM采用两个方法减少检查点生成的开销。第一，它将检查点生成过程和程序执行过程重叠。第二，为了高效地支持这种重叠，它动态地决定数据生成检查点的粒度。该决定依据我们新的观察，即在应用停滞时间和元数据存储开销之间存在一个权衡。在较小的粒度上生成检查点，带来的停滞时间比较短，而对应元数据占用的空间却会非常大；在较大的粒度上生成检查点，可以降低元数据占用的空间，但是会导致较长的停滞时间。因此，单一的检查点生成技术（或者基于小粒度或者基于大粒度）难以达到最优的效果。为了解决这一问题，我们提出了双模式检查点生成机制，它可以同步地为分散的（低空间局部性）和集中的（高空间局部性）内存写分别基于CPU缓存块粒度和操作系统页粒度生成检查点。与先前使用日志\cite{Volos:2011:MLP:1950365.1950379, Coburn:2011:NMP:1950365.1950380}或写时拷贝（copy-on-write，COW）\cite{Condit:2009:BIT:1629575.1629589, Venkataraman:2011:CDD:1960475.1960480}的持久化内存设计相比，ThyNVM显著减小了存储的损耗并增加了内存带宽的利用率。
+
+特别地，本章工作做出了如下几点贡献：（1）我们提出了一种新的持久化内存设计，支持\emph{对软件透明}的故障时数据一致性保障。我们的设计允许基于事务的和无修改的遗留应用通过load/store指令接口使用持久化内存。（2）对于生成检查点的粒度，我们定位了\emph{应用停滞时间和元数据空间开销之间的权衡关系}。在任意一个粒度上生成内存数据的检查点都不是最优的。（3）我们设计了一个新的\emph{双模式检查点生成}技术。我们发现，低空间局部性的更改最好以细粒度生成检查点，而高空间局部性的更改最好以粗粒度生成检查点。我们的设计比页粒度的检查点生成机制减少了86.2\%的停滞时间，而仅用块粒度的检查点生成机制所需硬件空间的26\%（位于内存控制器）。（4）我们在内存模拟器上实现了双模式检查点生成机制，使用我们经过形式化证明的一致性协议。它可以在保证数据一致性的同时，通过将程序执行和检查点生成过程重叠获得高性能。我们的解决方案可以达到不提供一致性支持的全DRAM系统性能的95.1\%。
 
 \section{软件透明的一致性保证机制}
 
-ThyNVM的设计有两个本质特性，软件透明和检查点生成。本节讨论我们开发这两个特性的原因。
+ThyNVM包含了两个设计选择：（1）对故障时数据一致性的支持是软件透明的，而不是依赖软件技术；（2）故障时数据一致性机制是基于检查点生成技术，而不是日志或写时拷贝。本节讨论采用这些技术选择的原因。
 
 \subsection{软件一致性保障技术的缺陷}
 
@@ -23,41 +30,58 @@ ThyNVM的设计有两个本质特性，软件透明和检查点生成。本节�
 \label{fig:motivation-code}
 \end{figure}
 
-之前大多数持久化内存设计~\cite{Condit:2009:BIT:1629575.1629589,Volos:2011:MLP:1950365.1950379,Coburn:2011:NMP:1950365.1950380,Zhao:2013:KCP:2540708.2540744,Venkataraman:2011:CDD:1960475.1960480}要求应用开发者显式地定义持久性数据并使用特定库来访问数据——故障时数据一致性保障机制与软件的语义紧耦合。我们通过图\ref{fig:motivation-code}中的实例代码来展示这种持久化内存设计的不足。该图比较了一个更新持久性哈希表项的软件方法的两种实现（代码改编自STAMP~\cite{Cao:2008:STA}）。图\ref{fig:motivation-code}（a）展示了使用类似于现有设计~\cite{Condit:2009:BIT:1629575.1629589, Volos:2011:MLP:1950365.1950379}的软件事务的实现；而图\ref{fig:motivation-code}（b）中的实例代码采用了ThyNVM的软件透明的故障时数据一致性支持。我们可以看到，在支持数据一致性时涉及软件支持，会有多方面的不足。
+之前大多数持久化内存设计~\cite{Condit:2009:BIT:1629575.1629589, Volos:2011:MLP:1950365.1950379, Coburn:2011:NMP:1950365.1950380, Zhao:2013:KCP:2540708.2540744, Venkataraman:2011:CDD:1960475.1960480}要求应用开发者显式地定义持久性数据并使用特定库来访问数据——故障时数据一致性保障机制与软件的语义紧耦合。我们通过图\ref{fig:motivation-code}中的实例代码来展示这种持久化内存设计的不足。该图比较了一个更新持久性哈希表项的软件方法的两种实现（代码改编自STAMP~\cite{Cao:2008:STA}）。图\ref{fig:motivation-code}（a）展示了使用类似于现有设计~\cite{Condit:2009:BIT:1629575.1629589, Volos:2011:MLP:1950365.1950379}的软件事务的实现；而图\ref{fig:motivation-code}（b）中的实例代码采用了ThyNVM的软件透明的故障时数据一致性支持。我们可以看到，在支持数据一致性时涉及软件支持，会有多方面的不足。
 
-首先，划分临时性和持久性数据很麻烦而且容易出错。图\ref{fig:motivation-code}（a）展示了许多无法避免的标记。程序员需要对软件行为有深入的了解，并且小心地确定哪些数据结构需要持久化以及如何操控这些数据。例如，图\ref{fig:motivation-code}（a）的第3行仅当这个哈希表实现固定数目的桶时才是正确的。
+首先，划分临时性和持久性数据很麻烦而且容易出错。图\ref{fig:motivation-code}（a）展示了许多无法避免的标记。程序员需要对软件行为有深入的了解，并且小心地确定哪些数据结构需要持久化以及如何操控这些数据。例如，图\ref{fig:motivation-code}（a）的第3行从哈希表中读出一个链表。该行仅当这个哈希表实现固定数目的链表时才是正确的。否则，另一个并发线程可能正在重置这些链表而导致错误。为了防止这个问题出现，程序员需要使用事务，来保护对链表的访问（程序第3行）不受并发线程的影响。
 
 其次，在一个统一的地址空间内，临时性和持久性数据之间的引用需要小心的管理。然而，对该问题的基于软件的解决方案并非最佳。例如，为了处理NV-to-V指针（非易失性指针指向易失性数据，图\ref{fig:motivation-code}（a）的第8行），NV-heaps~\cite{Coburn:2011:NMP:1950365.1950380}会简单地抛出一个运行时错误以禁用此类指针。
 
-第三，应用需要使用事务，通常是通过事务性内存接口（例如被Mnemosyne~\cite{Volos:2011:MLP:1950365.1950379}使用的TinySTM~\cite{Felber:2008:DPT}），来更新持久化数据，如图\ref{fig:motivation-code}（a）所示。遗憾的是，事务性内存，不论基于硬件还是基于软件，存在多方面的可扩展性问题~\cite{Cascaval:2008:STM:1454456.1454466,Pankratius:2011:STM:1989493.1989500,Dice:2009:EEC:1508244.1508263}。此外，开发人员必须使用新的API来实现或者重写各种代码库和程序，需要不可忽略的人工投入。不熟悉这些新API的程序员需要一个痛苦的学习过程。
+第三，应用需要使用事务，通常是通过事务性内存接口（例如被Mnemosyne~\cite{Volos:2011:MLP:1950365.1950379}使用的TinySTM~\cite{Felber:2008:DPT}），来更新持久化数据，如图\ref{fig:motivation-code}（a）所示。遗憾的是，事务性内存，不论基于硬件还是基于软件，存在多方面的可扩展性问题~\cite{Cascaval:2008:STM:1454456.1454466, Pankratius:2011:STM:1989493.1989500, Dice:2009:EEC:1508244.1508263}。此外，开发人员必须使用新的API来实现或者重写各种代码库和程序，需要不可忽略的人工投入。不熟悉这些新API的程序员需要一个痛苦的学习过程。
 
 最后，应用需要构建在特定的库之上，例如libmnemosyne~\cite{Volos:2011:MLP:1950365.1950379}和
-NV-heaps~\cite{Coburn:2011:NMP:1950365.1950380}。这会很大程度上降低持久化内存应用的移植性——在一个库上实现的应用，如果想采用其他的库，需要重新实现。编译器确实可以在一定程度上减轻程序员实现和移植代码的负担。然而，编译器会无差别地插装所有内存的读和写操作，带来可见的性能损耗。我们在GCC libitm~\cite{libitm}上实验了STAMP事务性标准测试~\cite{Cao:2008:STA}，结果插装本身最多可带来高达8\%的性能损失。
+NV-heaps~\cite{Coburn:2011:NMP:1950365.1950380}。这会很大程度上降低持久化内存应用的移植性——在一个库上实现的应用，如果想采用其他的库，需要重新实现。编译器确实可以在一定程度上减轻程序员实现和移植代码的负担。然而，编译器会无差别地插装所有（或大部分）内存的读和写操作，带来可见的性能损耗。我们在GCC libitm~\cite{libitm}上实验了STAMP事务性标准测试~\cite{Cao:2008:STA}，结果插装本身最多可带来高达8\%的性能损失。
 
-我们采用了允许软件程序直接访问持久化内存的使用模型。如图\ref{fig:motivation-code}（b）所示，我们可以不更改代码而实现数据结构的持久化。
+我们采用了允许软件程序直接访问持久化内存而无需特别的支持故障时数据一致性的接口的使用模型。如图\ref{fig:motivation-code}（b）所示，我们可以不更改代码而实现数据结构的持久化。
 
 \subsection{日志及写时拷贝技术的缺陷}
 
-前人基于软件的持久化内存设计，大部分通过修改现有软件事务性内存库、文件系统或者数据库实现，采用日志~\cite{Volos:2011:MLP:1950365.1950379, Coburn:2011:NMP:1950365.1950380}或者写时拷贝技术~\cite{Condit:2009:BIT:1629575.1629589,
-Venkataraman:2011:CDD:1960475.1960480}维持数据一致性。然而，两种技术为支持数据一致性保障会引入较大的性能损耗。
+前人基于软件的持久化内存设计多采用日志~\cite{Volos:2011:MLP:1950365.1950379, Coburn:2011:NMP:1950365.1950380}或者写时拷贝技术~\cite{Condit:2009:BIT:1629575.1629589,
+Venkataraman:2011:CDD:1960475.1960480}维持数据一致性。基于日志的系统在日志中维护原始数据的额外副本，用以保存新的数据更新（重做日志）或者旧的数据值（撤销日志）。基于写时拷贝的系统在数据更新时会创建一个新的副本用于更新。然而，两种技术为支持数据一致性保障会引入较大的性能损耗。
 
 日志可能消耗比原始数据大很多的NVM空间，因为每个日志项都是一个既包含数据又包含元数据（例如数据所在的地址）的元组，而且通常每次写操作都需要记录~\cite{Volos:2011:MLP:1950365.1950379,
 Coburn:2011:NMP:1950365.1950380}\footnote{某些对于日志的改进或变形~\cite{1003568}使用一个索引结构来合并更新。该设计即与我们双模式之一类似。}。此外，日志重放增加了故障后系统恢复时间，会抵消使用NVM而不是顺序访问的块设备带来的快速数据恢复的好处。
 
 写时数据拷贝有两个缺点。首先，拷贝操作代价较大，会引发较长的停滞时间。其次，它不可避免地会复制未更改的数据，消耗额外的NVM带宽。这个缺陷在更新的地址很分散时尤为突出。
 
-相比之下，生成检查点是一种更加灵活的方法，它定期地将易失性的数据及元数据写入NVM形成一致的内存数据的快照。我们仔细挑选和协调两种检查点生成模式，使它们同步地在不同粒度上工作，从而避免日志和写时拷贝的弊端。
+相比之下，生成检查点是一种更加灵活的方法，它定期地将易失性的数据及元数据写入NVM形成一致的内存数据的快照。我们采用检查点生成技术来克服日志和写时拷贝的弊端，但同时，降低检查点生成的开销尤为重要。为此，本章设计了新的检查点生成机制。
 
 
 \section{双模式检查点生成技术}
 
 \subsection{粒度的权衡}
 
-CPU缓存在块粒度上（典型配置为64字节）管理数据；操作系统在页粒度上（典型配置为4KB）管理数据。我们发现两个不同的粒度会带来一个在检查点生成停滞时间和元数据存储空间之间的折衷。
+检查点生成主要是获得数据工作副本的快照（工作副本即正在被活跃地更新的数据副本），并将其持久化到NVM中（即为检查点）。检查点生成主要有两个问题：（1）生成数据工作副本检查点的延迟；（2）为追踪数据的工作副本和检查点的位置而储存的元数据的开销。理想情况下，我们希望将两者都最小化。然而，它们之间存在复杂的权衡关系。在设计高效的检查点生成机制时，我们需要考虑这些权衡关系。
 
-当我们选择在缓存块粒度上追踪持久化内存的更改时，各个细粒度写如果直接发送到NVM，可以在一两次总线传输的延迟内完成。这样，ThyNVM只需要在生成检查点时将追踪这些数据所用的元数据进行持久化即可。这些元数据可以保存在一个表中，每个表项保存一个从缓存块在内存中的地址到它实际检查点或工作数据位置的映射。这种模式的缺点在于元数据表项的数量是按页粒度追踪数据所需表项的64倍，因为每个页包含64个缓存块。相反地，如果我们在页粒度上追踪持久化内存的更改，我们可以极大地降低保存元数据表所需的硬件空间开销。然而把整页的数据写入NVM所造成的延迟，远大于更新一个缓存块。为了提升系统性能，ThyNVM使用DRAM来缓冲页粒度的更新，一段时间后再在NVM上生成这些页的检查点。尽管如此，将整页数据从DRAM传送到NVM依然会给系统带来较长的停滞时间。
+首先，元数据的开销决定于我们追踪数据工作副本和检查点的粒度。我们将该粒度称为检查点粒度。通过使用较大的检查点粒度（例如操作系统页粒度），我们只需要小量的元数据即可追踪大量数据的位置。\footnote{我们可以与CPU缓存的标签（tag）类比：小的缓存块（细粒度）造成较大标签开销，而大的缓存块（粗粒度）需要较小的标签开销。}
 
-考虑到如上的折衷，只在一个粒度上追踪持久化内存的更改不是最佳方案。这种情况下，我们需要开发一种双粒度的检查点生成技术。
+第二，检查点生成延迟会受到数据工作副本的位置的影响。在一个混合内存系统中，工作副本可以保存在DRAM或者NVM。我们分析了这两种选择.（1）{\em DRAM}：因为DRAM写入比NVM更快，将工作副本“缓存”在DRAM中可以提升应用的写操作的性能。然而，如果我们把工作副本缓存于DRAM中，该副本需要在生成检查点的过程中被写回到NVM中，导致较长的检查点生成延迟。（2）{\em NVM}：我们可以通过将工作副本保存在NVM中并在收到内存写请求时直接在NVM原地更新数据的方式来显著减小检查点生成的延迟。因为工作副本已经在NVM中持久化，检查点生成变得非常快捷：我们只需要在生成检查点的过程中将元数据持久化即可。然而，这种将工作副本保存在NVM中并做原地更新的方式，要求我们在收到应用的写操作时将工作副本\emph{重映射}到一个新的与检查点数据不同的NVM地址上。这样，应用可以在这个新的数据副本上操作而不会破坏检查点。而重映射操作的速度取决于追踪数据的粒度（即检查点粒度）：细粒度可以实现较快的重映射，使得应用可以快速更新数据；而粗粒度会导致缓慢的重映射（因为要求拷贝大量数据，如整个页），进而导致写操作的延迟，使得应用长时间停顿。
+
+表\ref{tab:tradeoff}总结了检查点粒度和工作副本位置对检查点生成延迟和元数据开销的影响。
+
+\begin{table}[!h]
+  \centering
+  \includegraphics[width=\linewidth]{tradeoff}
+  \caption{选择不同的检查点粒度和工作副本位置构成的四种组合，以及不同组合的优势和劣势。粗体部分是决定一个组合高效或低效的主要因素。}
+  \label{tab:tradeoff}
+\end{table}
+
+选择小检查点粒度和在DRAM中保存工作副本（\ding{202}）被认为低效的原因是，该组合会带来较大的元数据开销（相对于大检查点粒度\ding{203}），而且造成较大的检查点生成延迟（相对于在NVM保存工作副本\ding{204}）。
+
+我们认为大检查点粒度和在NVM中保存工作副本（\ding{205}）构成的组合也是低效的，因为它会造成过高的重映射操作的延迟。该延迟会实时地体现在对NVM的写操作中，处于应用执行的\emph{关键路径}上。例如，如果我们在页粒度上跟踪数据，为了重映射一个写入NVM的缓存块粒度的更改，我们需要一并拷贝目标页中其他所有没有更改的缓存块到新的副本中，而且只有在这些完成后，应用才可以在该页继续进行写操作。这个重映射的开销在处理应用store指令的关键路径上。
+
+基于对这些复杂的权衡关系的观察，我们的结论是，没有单一的检查点粒度或工作副本位置的选择可以很好地满足所有的需求。在ThyNVM的检查点生成模式中，我们设计了一个多粒度的检查点生成机制来实现多个检查点粒度和不同的工作副本位置所带来的最优特性。特别地，我们利用图\ref{tab:tradeoff}中两个具有互补权衡的\emph{部分高效}的组合：（1）在小粒度上生成检查点，将工作数据保存在NVM中并执行NVM写的重映射（\ding{204}）。该组合对应于我们{\em 块重映射}模式（第\ref{subsec:block-remap}节）。（2）在大粒度上生成检查点，将工作数据保存在DRAM并回写到NVM中（\ding{203}）。该组合对应于我们的\emph{页回写}模式（第\ref{subsec:page-writeback}节）。我们设计了两种模式间精巧的合作机制以实现两者的优势（第\ref{subsec:coordination}节），即同时获得较小的元数据开销和较短的检查点生成延迟。
+
+\section{系统架构}
 
 \begin{figure}[!h]
 \centering
@@ -66,10 +90,7 @@ CPU缓存在块粒度上（典型配置为64字节）管理数据；操作系统
 \label{fig:thynvm-arch}
 \end{figure}
 
-ThyNVM采用DRAM和NVM的混合架构，基于硬件实现，提供软件透明的故障时数据一致性保障。ThyNVM以透明于应用程序的方式保障所有内存数据在故障时的一致性。为了利用在不同粒度持久化数据带来的不同特性，我们提出了一种新的双模式检查点生成机制。它可以同时在两个粒度上生成内存数据的检查点：分散的写在缓存块粒度上生成检查点，使用块重映射模式（第\ref{subsec:block-remap}节）；集中的写在页粒度上生成检查点，使用页回写模式（第\ref{subsec:page-writeback}节）。
-
-另外，我们提出了两种机制来协调双模式检查点生成（第\ref{subsec:coordination}节）。第一，我们允许相对较快的块重映射模式来暂时接管原本应该由较慢的页回写模式处理的写。这样做可以显著减少检查点生成阻塞程序执行的时间。第二，我们定期地依据程序执行时访问内存的特点在两种模式之间迁移数据页。这样做可以有效保证检查点生成模式和其处理的写的行为相匹配。
-
+ThyNVM采用DRAM和NVM的混合架构，基于硬件实现，提供对软件透明的故障时数据一致性保障。
 图\ref{fig:thynvm-arch}绘制了ThyNVM架构总览。DRAM和NVM部署在内存总线上，并映射到同一个物理内存地址空间中。该地址空间暴露给操作系统。我们更改了内存控制器，增加了一个检查点生成控制器，和两个用于维护内存访问元数据的地址转换表。这两个表分别是在缓存块粒度和页粒度管理元数据的块转换表（block translation table，BTT）和页转换表（page translation table，PTT）。
 
 \subsection{系统定义}
@@ -239,12 +260,12 @@ ext4}来保证数据的一致性。我们的实现遵照~\cite{Remzi:Journaling}
 \item 影子页系统：一个混合的NVM，使用影子页机制~\cite{bernstein2009principles}来保证数据一致性。该机制对NVM实行写时拷贝，并在DRAM中保存这些页作为缓冲。当DRAM缓冲被填满时，脏页被写入NVM，但不会覆盖原目标地址的数据。该配置中DRAM的大小和ThyNVM中的DRAM大小一样。
 \end{enumerate}
  
-\textbf{标准测试集}。我们评测了三组不同的负载。
+\textbf{标准测试集}。我们测评了三组不同的负载。
 
 \begin{enumerate}
-\item 微型标准测试集涵盖不同的内存访问模式。为了显示我们一致性机制对不用访问模式的适应性，我们评测了三组代表典型访问模式的微型标准测试集。（i）随机：随机访问一个大数组。（ii）流式：顺序访问一个大数组。（iii）滑动：在大数组上虚拟一个工作数据集并滑动。每一步，随机访问数组中的一段特定区域，然后转移到另一个区域。上述每个负载都包含1:1的读写操作数目。
-\item 面向存储的内存中标准测试集。持久性内存可通过将传统存储的数据纺织在内存来优化基于磁盘存储的应用。为了评测ThyNVM对此类应用的影响，我们运行了两个标准测试集（类似于~\cite{Coburn:2011:NMP:1950365.1950380, Zhao:2013:KCP:2540708.2540744}）。它们包含代表典型内存存储的键值存储的实现，分别在哈希表和红黑树的内存数据结构上执行查找、插入和删除等操作。 
-\item SPEC CPU 2006。 因为ThyNVM为支持多种类型的遗留代码设计，所以我们也评测了SPEC标准测试集。承担此类负载的进程因为可以假定一个可持久化的有一致性保障的地址空间而获益。我们从SPEC套件中选择了8个内存访问最集中的应用，每个应用执行10亿条指令。对于其他内存访问不太集中的应用，ThyNVM的影响可以忽略不计，几乎等同于提供零代价一致性保证的全DRAM理想系统。 
+\item 微型标准测试集涵盖不同的内存访问模式。为了显示我们一致性机制对不用访问模式的适应性，我们测评了三组代表典型访问模式的微型标准测试集。（i）随机：随机访问一个大数组。（ii）流式：顺序访问一个大数组。（iii）滑动：在大数组上虚拟一个工作数据集并滑动。每一步，随机访问数组中的一段特定区域，然后转移到另一个区域。上述每个负载都包含1:1的读写操作数目。
+\item 面向存储的内存中标准测试集。持久性内存可通过将传统存储的数据纺织在内存来优化基于磁盘存储的应用。为了测评ThyNVM对此类应用的影响，我们运行了两个标准测试集（类似于~\cite{Coburn:2011:NMP:1950365.1950380, Zhao:2013:KCP:2540708.2540744}）。它们包含代表典型内存存储的键值存储的实现，分别在哈希表和红黑树的内存数据结构上执行查找、插入和删除等操作。 
+\item SPEC CPU 2006。 因为ThyNVM为支持多种类型的遗留代码设计，所以我们也测评了SPEC标准测试集。承担此类负载的进程因为可以假定一个可持久化的有一致性保障的地址空间而获益。我们从SPEC套件中选择了8个内存访问最集中的应用，每个应用执行10亿条指令。对于其他内存访问不太集中的应用，ThyNVM的影响可以忽略不计，几乎等同于提供零代价一致性保证的全DRAM理想系统。 
 \end{enumerate}
 
 \subsection{微型标准测试集}
@@ -373,82 +394,25 @@ ext4}来保证数据的一致性。我们的实现遵照~\cite{Remzi:Journaling}
 \section{讨论}
 \label{sec:thnvm-discuss}
 
-\subsection{与全系统持久化的对比}
-ThyNVM的模型和目标与全系统持久化（WSP）\cite{Narayanan:2012:WP:2150976.2151018}的模型和目标有很大不同。WSP的目标是支持全系统状态的恢复，\emph{包括设备状态}。然而，ThyNVM的目标是支持仅\emph{内存数据}的故障时一致性。ThyNVM不处理设备状态，将外部设备状态的恢复交由系统软件（如下所述）。 WSP假设一个全NVM配置从而只需要在电源故障时只刷出CPU的状态而不必要管非易失性的DRAM状态。
-ThyNVM assumes
-a DRAM+NVM hybrid memory that can offer better performance than NVM
-alone~\cite{Qureshi:2009:SHP:1555754.1555760, 6378661}, but requires
-periodic checkpointing of both CPU states and memory data to provide
-crash consistency. Unlike WSP, ThyNVM provides crash consistency of
-memory data {\em without requiring or assuming} purely nonvolatile
-memory.
+\textbf{与全系统持久化的对比：}
+ThyNVM的模型和目标与全系统持久化（WSP）\cite{Narayanan:2012:WP:2150976.2151018}的模型和目标有很大不同。WSP的目标是支持全系统状态的恢复，\emph{包括设备状态}。然而，ThyNVM的目标是支持仅\emph{内存数据}的故障时一致性。ThyNVM不处理设备状态，将外部设备状态的恢复交由系统软件（如下所述）。 WSP假设一个全NVM配置从而仅需要在电源故障时刷出CPU的状态而不必要管非易失的DRAM状态。
+ThyNVM采用DRAM+NVM的混合内存架构，可以提供比单独NVM更好的性能\cite{Qureshi:2009:SHP:1555754.1555760, 6378661}，但要求定期生成CPU状态和内存数据的检查点以保证故障时的数据一致性。与WSP不同的是，ThyNVM提供内存数据的故障时一致性保证，而不要求或假设全NVM的配置。
 
-\subsection{故障时外部状态丢失问题}
-ThyNVM does not
-protect external states (e.g., in the network card).  These states are
-lost after system reboots, leading to device errors during
-recovery. As such, system failure events are \emph{visible} to
-programs in the form of device errors. Device errors are common in
-computer systems
-\cite{Ghemawat:2003:GFS:945445.945450,Ford:2010:AGD:1924943.1924948}. Commodity systems already incorporate
-mechanisms to handle such errors~\cite{cpp:exceptions, Robillard:1999:AEF:318773.319251, Ogasawara:2006:EEO:1111596.1111598}. This
-failure model we assume is inline with many previous works, e.g.,
-\cite{1003568,1003567,Goodenough:1975:EHI:361227.361230,4222585}.
+\textbf{故障时外部状态丢失问题：}
+ThyNVM不保护外部状态（例如，网卡状态）。这些状态在系统重启后丢失，可能在系统恢复过程中导致设备错误。因此，系统故障以设备错误的形式对程序\emph{可见}。设备错误在计算机系统中相当普遍\cite{Ghemawat:2003:GFS:945445.945450, Ford:2010:AGD:1924943.1924948}。商用系统已经包含机制来处理此类错误\cite{cpp:exceptions, Robillard:1999:AEF:318773.319251, Ogasawara:2006:EEO:1111596.1111598}。我们假设的这个故障模型也与若干前人工作
+\cite{1003568,1003567,Goodenough:1975:EHI:361227.361230,4222585}相合。
 
-\subsection{软件程序错误}
+\textbf{软件程序错误：}
+软件错误可能导致内存状态被污染和系统崩溃。但是，故障时数据一致性和软件错误容忍是两个不同的问题。任何维护故障时数据一致性的系统（包括数据库和文件系统）都可能受到软件错误的伤害，而ThyNVM也不例外。例如，常见软件Eclipse（一个广泛使用的开发套件）和Chromium（一款流行的浏览器）中的软件错误分别曾导致\emph{数据库}和\emph{文件系统}的数据污染\cite{eclipse:bug,chrom:bug}}。ThyNVM提供故障时数据一致性保证，但无法避免这些软件错误，也并不为容忍这类错误而设计。然而，它可以经过扩展帮助增强系统的错误容忍能力。例如，可以定期将部分检查点拷贝到二级存储中，并设计某种机制来定位和恢复到之前没有错误的检查点。对此类机制的研究可能会开辟新的研究方向。
 
-Software bugs can lead to system
-crashes by corrupting memory states. Yet, crash consistency and bug
-tolerance are two different problems.  Any system that maintains crash
-consistency, including databases and file systems that do so, is
-susceptible to software bugs; ThyNVM is not different. For example,
-{bugs in commonly-used software, e.g., Eclipse (a widely used
-development suite) and Chromium (a popular browser), have caused data
-corruption in \emph{databases} and \emph{file
-systems}~\cite{eclipse:bug,chrom:bug}}. ThyNVM provides crash
-consistency, and it cannot (and is not designed to) prevent such
-software bugs. However, it can be extended to help enhance bug
-tolerance, e.g., by copying checkpoints to secondary storage
-periodically and devising mechanisms to find and recover to past
-bug-free checkpoints. Studies of such mechanisms can open up
-attractive new research directions for future work building
-upon ThyNVM.
-
-\subsection{显式持久化接口}
-Our checkpointing mechanism can be seamlessly integrated in a system
-with a configurable persistence
-guarantee~\cite{Ports:2010:TCA:1924943.1924963,
+\textbf{显式持久化接口：}
+我们的检查点生成机制可以无缝地与可配置持久化保证的系统\cite{Ports:2010:TCA:1924943.1924963,
 Cipar:2012:LTF:2168836.2168854,
-Mickens:2014:BFC:2616448.2616473}. Such a system is only allowed to
-lose data updates that happened in the last $n$~ms, where $n$ is
-configurable. ThyNVM can be configured to checkpoint data every $n$ ms
-and roll back to the last consistent checkpoint after a crash.
-Persistence of data can also be explicitly triggered by the program
-via a new instruction added to the ISA that forces ThyNVM to end an
-epoch.
+Mickens:2014:BFC:2616448.2616473}整合。此类系统仅允许丢失过去最多$n$毫秒内的数据更改，其中$n$是可配置的。ThyNVM可以配置为每$n$毫秒产生检查点，从而可以在故障时回滚到最近的一致的检查点。与此同时，应用程序还可以通过在CPU指令集中加入的某个新指令强制ThyNVM结束一个时间单元，即显式地触发内存数据的持久化。
+
 
 \section{本章小结}
 
-We introduce a software-transparent mechanism that provides crash
-consistency of memory data for persistent and hybrid memory
-systems. Our design, ThyNVM, is based on automatic periodic
-checkpointing of the main memory state in a manner that minimally
-impacts application execution time. To this end, we introduce a new
-dual-scheme checkpointing mechanism that efficiently overlaps
-checkpointing and application execution by (1)~adapting the
-granularity of checkpointing to the spatial locality of memory updates
-and (2)~providing mechanisms to coordinate memory updates with two
-different granularities of checkpointing. Our evaluations using
-multiple different access patterns, realistic storage workloads, and
-compute-bound workloads show that ThyNVM provides crash consistency of
-memory data at low overhead, with performance close to an ideal system
-that provides crash consistency at no performance overhead. We
-believe ThyNVM's efficient support for software-transparent crash
-consistency can enable (1)~easier and more widespread adoption of
-persistent memory, and (2)~more efficient software stack support for
-exploiting persistent memory. We hope that our work encourages more
-research in providing automatic and programmer-friendly mechanisms for
-managing persistent and hybrid memories. To foster such research, we
-have open sourced ThyNVM at \url{http://persper.com/thynvm}.
+我们为混合的持久性内存系统引入了一个对软件透明的提供内存数据故障时一致性的机制。我们的设计自动地定期地生成内存数据的检查点，并最小化对应用执行的影响。为此，我们采用一种新的双模式检查点生成技术，可以有效地将程序执行和检查点生成过程重叠。这种有效性基于（1）依据内存更改的空间局部性适配生成检查点的粒度以及（2）提供机制来协调两种检查点粒度下的内存修改。我们的测评涵盖多种不同的访问模式、真实的存储类负载和计算密集型负载。测评结果显式，ThyNVM以很低的代价提供内存数据的故障时一致性。我们相信ThyNVM对软件透明的高效的故障时数据一致性机制可以促进（1）对持久性内存系统更加便捷和广泛的使用，以及（2）更加高效的支持持久性内存的软件栈设计。我们希望本章工作鼓励更多研究聚焦在为管理持久性或混合内存提供自动的程序员友好的机制。为此，我们将ThyNVM在如下地址开源：\url{http://persper.com/thynvm}。
 
 
