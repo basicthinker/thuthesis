@@ -13,7 +13,7 @@ ThyNVM使用两个地址转换表，\emph{块转换表}（BTT）和\emph{页转�
 
 \begin{figure}[!h]
 \centering
-\includegraphics[width=0.6\linewidth]{addr-space-detail}
+\includegraphics[width=0.7\linewidth]{addr-space-detail}
 \caption{ThyNVM的物理和硬件地址空间。}
 \label{fig:addr-space-detail}
 \end{figure}
@@ -25,7 +25,7 @@ ThyNVM使用两个地址转换表，\emph{块转换表}（BTT）和\emph{页转�
 \begin{figure}[!t]
 \centering
 \input{tikz/state-machine.tikz}
-\caption{在块重映射模式下，一个BTT表项的状态。每个内存写标记着``exec.''或``ckpt.''，分别意味着该内存写到来的时间在程序执行阶段（无检查点生成）或在检查点生成阶段。}
+\caption{在块重映射模式下，一个BTT表项的状态。每个内存写（“write”）后注明“exec.”或“ckpt.”，分别意味着该内存写到来的时间在程序执行阶段（无检查点生成）或在检查点生成阶段；“write'”指原本应到页缓存的写。}
 \label{fig-state-machine}
 \end{figure}
 

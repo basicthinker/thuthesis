@@ -32,23 +32,23 @@ font=\footnotesize, text centered]
   edge [bend right, anchor=base]
     node [xshift=0.12\tikzdistance, yshift=-0.05\tikzdistance] {\makecell[c]{\circled{$\mathnormal{8}$}\\write (ckpt.)}} (s)
   edge [bend right, anchor=base]
-    node [xshift=-0.2\tikzdistance, yshift=-0.1\tikzdistance] {\makecell[c]{write\\to \region{Page Cache}\\(ckpt.)}} (l);
+    node [xshift=-0.2\tikzdistance, yshift=-0.1\tikzdistance] {\makecell[c]{write'\\(ckpt.)}} (l);
 \path (s)
   edge [bend right, anchor=west]
     node [xshift=-0.15\tikzdistance, yshift=0.05\tikzdistance]
       {\makecell[c]{write (exec.) $|$ clear\\\circled{$\mathnormal{9}$}}} (d)
   edge [loop, out=330, in=30, anchor=north, looseness=4]
     node [xshift=-0.12\tikzdistance, yshift=-0.1\tikzdistance]
-      {\makecell[c]{write\\(ckpt.)}} (s);
+      {\makecell[c]{write (ckpt.)}} (s);
 \path (d)
   edge node [anchor=south] {\makecell[c]{BTT flush\\\circled{$\mathnormal{2}$}}} (c)
   edge [loop, out=60, in=120, looseness=4, anchor=south]
     node {write (exec.)} (d);
 \path (l)
   edge [bend right, anchor=west]
-    node {\makecell[c]{write (exec.) $|$ clear\\\circled{$\mathnormal{10}$}}} (f)
+    node {\makecell[c]{write' (exec.) $|$ clear \circled{$\mathnormal{10}$}}} (f)
   edge [loop, out=330, in=30, looseness=4, anchor=north]
-    node [anchor=west] {\makecell[c]{write\\(ckpt.)}} (l);
+    node [anchor=west] {\makecell[c]{write' (ckpt.)}} (l);
 
 \end{tikzpicture}
 
