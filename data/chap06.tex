@@ -11,7 +11,7 @@ ThyNVM使用两个地址转换表，\emph{块转换表}（BTT）和\emph{页转�
 
 为了方便内存管理，我们将硬件地址空间划分为六个有不同用途的区域。图~\ref{fig:addr-space-detail}描绘了ThyNVM地址空间的组织形式。下面我们描述每个区域的用途。
 
-\begin{figure}[!h]
+\begin{figure}[!ht]
 \centering
 \includegraphics[width=0.7\linewidth]{addr-space-detail}
 \caption{ThyNVM的物理和硬件地址空间。}
@@ -35,6 +35,7 @@ ThyNVM使用两个地址转换表，\emph{块转换表}（BTT）和\emph{页转�
 这里的块检查点区域和页检查点区域共同对应于第\ref{subsec:thynvm-space}节描述的检查点区域A，而页缓存区域和块缓存区域则共同对应于工作数据区域。
 
 \section{地址转换状态机}
+\label{subsec:thynvm-state-machin}
 
 我们使用一个状态机来决定一个内存写请求应当访问的位置，即将内存写请求的物理地址转换成一个合适的硬件地址。除了保存这个从物理地址到硬件地址的映射，每个BTT表项同时保存着7个状态之一，该状态驱动着块重映射模式的控制流。PTT重用与该状态机相同的逻辑，但只需要这些状态中的4个。下面我们聚焦于描述BTT的行为，而后讨论PTT如何适配到这个状态机的一个子集。图~\ref{fig-state-machine}描绘了状态机的全貌。为了清楚地展示，我们将状态分组而后逐组进行介绍。
 
@@ -57,7 +58,7 @@ ThyNVM使用两个地址转换表，\emph{块转换表}（BTT）和\emph{页转�
 \item \textbf{\state{Dirty}态}：该状态表明其物理地址在当前活跃时间单元内被更改过，且对应的硬件地址在块检查点区域。该映射可以继续有效直到当前时间单元结束，用以合并到相同物理地址的内存写。在当前时间单元结束后，该硬件地址上的数据应当变为检查点数据，所以这个表项会被备份到NVM，将映射关系持久化，以备系统故障时定位检查点数据。
 
 \item \textbf{\state{Hidden}态}：这个状态表明其物理地址在当前活跃时间单元内被更改过，且对应的硬件地址是位于家区域的主硬件地址。这里实际上并没有地址转换，因为主硬件地址和物理地址是相等的。然而，该表项会一直存在直到当前时间单元结束，目的是合并同时间单元内对该物理地址的其他写。在当前时间单元结束后，这个表项会被清除。
-
+\end{itemize}
 
 \vspace{\noindentsep}
 \noindent \textbf{实例  }为了展示上述状态之间的动态转换，我们构造了图~\ref{fig-example}中的实例。我们首先忽略检查点生成期间的步骤（步骤A和B），并简单假设它们没有发生。在这个实例中，我们展示了三个连续的时间单元，记为时间单元0到2。从时间单元$k$收到的内存写会产生数据版本$v_k$，其中$k = 0, 1, 2$。
@@ -105,23 +106,203 @@ ThyNVM使用两个地址转换表，\emph{块转换表}（BTT）和\emph{页转�
 
 最后我们有一个用于两个模式间合作的状态。当页回写模式生成脏页的检查点时，对这些页的各个内存写暂由块重映射模式重定向到块缓存区域（与第\ref{subsec:states-ckpt}节介绍的操作类似）。我们不把这些BTT表项混入上文的那些状态和转换，所以这些表项被标记为\state{loan}。当检查点生成结束这些页面重新可以被直接修改的时候，\state{Loan}态的表项最终将数据移回原页中（状态转换\circled{$\mathnormal{10}$}）。
 
-\section{问题定义}
+\section{正确性定义}
 
-本节给出协议证明的问题定义。我们这里聚焦于ThyNVM检查点生成模式的故障时一致性，亦即可恢复性——任何时候系统发生故障，ThyNVM可以恢复最近的一致的检查点。特别地，假设$t_k$为时间单元$k$结束执行的时刻，那么在$t_{k-1}$和$t_k$之间，ThyNVM顺次经历两个时间阶段，即一个检查点生成阶段（与时间单元$k+1$的程序执行阶段重合）和一个程序执行阶段（指没有与检查点生成重合的部分）；$t_k$时刻的数据快照记为版本$v_k$，亦即时间单元$k$的检查点版本。我们将证明如下两个不变式，在状态机的转换中一直保持成立。
+本节给出一致性协议正确性证明的定义。我们这里聚焦于ThyNVM检查点生成模式的故障时一致性，亦即可恢复性——任何时候系统发生故障，ThyNVM可以恢复最近的一致的检查点。特别地，假设$t_k$为时间单元$k$结束执行的时刻，那么在$t_{k-1}$和$t_k$之间，ThyNVM顺次经历两个时间阶段，即一个检查点生成阶段（与时间单元$k+1$的程序执行阶段重合）和一个程序执行阶段（指没有与检查点生成重合的部分）；$t_k$时刻的数据快照记为版本$v_k$，亦即时间单元$k$的检查点版本。我们将证明如下两个不变式，在状态机的转换中一直保持成立。
 
-\textbf{不变式1}：在时刻$t_{k-1}$与$t_k$之间的检查点生成阶段，数据版本$v_{k-1}$和$v_{k-2}$及其在地址转换表中的映射都被保留。
-
-Invariant 2: 在时刻$t_{k-1}$与$t_k$之间的程序执行阶段，数据版本$v_{k-1}$及其在地址转换表中的映射都被保留。
+\begin{enumerate}
+\item \label{invar-ckpt} 在时刻$t_{k-1}$与$t_k$之间的检查点生成阶段，数据版本$v_{k-1}$和$v_{k-2}$及其在地址转换表中的映射都被保留。
+\item \label{invar-exec} 在时刻$t_{k-1}$与$t_k$之间的程序执行阶段，数据版本$v_{k-1}$及其在地址转换表中的映射都被保留。
+\end{enumerate}
 
 显然，如果上述两个不变式成立，那么系统在检查点生成阶段或程序执行阶段发生故障时，可以分别恢复到{\cp}或{\cl}。
 
-\section{系统抽象}
+\section{块重映射模式的正确性证明}
 
-\subsection{数据结构的抽象}
+ThyNVM的块重映射模式由第\ref{subsec:thynvm-state-machin}节的状态机描述。对于任何由状态机转换形成的状态序列，我们使用数学归纳法\cite{Hopcroft:ALC:2006}验证上节两个不变式的正确性。
 
-\subsection{程序行为的抽象}
+\subsection{数据抽象}
 
-\section{证明步骤}
+为了实施形式化证明，我们使用变量来代表ThyNVM中的数据结构，如图\ref{fig-data-struct}所示。由于我们只关心数据版本而非具体的数据，不妨认为这些变量保存着数据版本值；大写的变量值表示集合。因为所有 BTT表项互斥，我们仅关心任意一个BTT表项，并假设该表项当前是用于物理地址\phy{P}。
 
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.9\columnwidth]{data-struct}
+\caption{ThyNVM中的数据结构及其符号。}
+\label{fig-data-struct}
+\end{figure}
+
+\begin{itemize}
+\item $p$ 保存着主硬件地址\nvm{P}上的数据块的版本号。
+\item $T$ 保存着对应于\phy{P}的BTT表项。该表项是易失的。如果没有对应于\phy{P}的BTT表项，那么
+$T=\varnothing$，此时可认为\phy{P}的状态为\state{free}；否则，我们恒有$\left\vert{T}\right\vert = 1$，其中唯一的项保存着在块检查点区域中对应数据块的版本号。
+\item $T^B$ 保存着持久化的BTT表项，位于BTT备份区域。类似地，我们有$\left\vert{T^B}\right\vert \le 1$。特别地，对于时间单元$0$，我们仅出于方便计算的目的认为$T^B \subset \{-1, -2\}$。
 \end{itemize}
 
+另外，下面的字母代BTT表项状态机的输入。
+
+\begin{itemize}
+\item $\mathbf{w}$和$\mathbf{\hat{w}}$分别表示在程序执行阶段和检查点生成阶段向物理地址\phy{P}的写操作。
+\item $\mathbf{r}$和$\mathbf{\hat{r}}$分别表示在程序执行阶段和检查点生成阶段撤销物理地址\phy{P}对应的BTT表项。
+\item $\mathbf{f}$表示刷出BTT到备份区域。该事件标志一个检查点阶段的开始。
+\item $\mathbf{c}$表示在刷出BTT之前清理\state{pre-dirty}态和\state{pre-dirty}态表项的操作。
+\end{itemize}
+
+\subsection{行为抽象}
+
+基于如上的变量和符号，我们将主要的状态转换过程表述为过程\ref{alg-dirty}到\ref{alg-free-c}。相应地，BTT表项的状态机也可改写为图\ref{fig:asm}。注意\state{loan}态没有在图中画出，而是在第\ref{sec:proof-page-writeback}节单独讨论。
+
+\begin{algorithm} [!h]
+\caption{转换至\state{dirty}态}
+\label{alg-dirty}
+\begin{algorithmic}[1]
+\Require 处于程序执行阶段。
+\State 在块检查点区域分配地址\nvm{N}
+\State 将数据块$v_0$写入\nvm{N}
+\If{表项是\state{pre-dirty}态，即映射关系为\phy{P}-\dram{D}}
+  \State 从块缓存区域撤销位于\dram{D}的数据块
+\EndIf
+\State 设置表项为\state{dirty}态，即映射关系为\phy{P}-\nvm{N} \Comment{$T \leftarrow \{0\}$}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm} [!h]
+\caption{临时缓存数据块}
+\label{alg-hold}
+\begin{algorithmic}[1]
+\Require 处于检查点生成阶段。
+\State 在块缓存区域分配地址\dram{D}
+\State 将数据块$v_0$写入\dram{D}
+\If{表项是\state{clean}态，即映射关系为\phy{P}-\nvm{N}}
+  \State 将位于\nvm{N}的数据标记为在下一个检查点生成阶段被撤销
+  \State 将表项转换至\state{pre-hidden}态
+\ElsIf{表项是\state{free}态}
+  \State 将表项转换至\state{pre-dirty}态
+\EndIf
+\State 设置映射关系为\phy{P}-\dram{D} \Comment{$T \leftarrow \{0\}$}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm} [!h]
+\caption{转换至\state{hidden}态}
+\label{alg-hide}
+\begin{algorithmic}[1]
+\Require 处于程序执行阶段。
+\State 将数据块$v_0$写入主硬件地址 \Comment{$p \leftarrow 0$}
+\If{表项是\state{clean}态，即映射关系为\phy{P}-\nvm{N}}
+  \State 将位于\nvm{N}的数据标记为在下一个检查点生成阶段被撤销
+\ElsIf{表项是\state{pre-hidden}态，即映射关系为\phy{P}-\dram{D}}
+  \State 从块缓存区域撤销位于\dram{D}的数据块
+\EndIf
+\State 将表项转换至\state{hidden}态 \Comment{$T \leftarrow \{p\}$}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm} [!h]
+\caption{撤销\state{clean}态的映射关系\phy{P}-\nvm{N}}
+\label{alg-free-c}
+\begin{algorithmic}[1]
+\If{处于程序执行阶段}
+  \State 将位于\nvm{N}的数据块$v_{-1}$写入\nvm{P}，覆盖数据块$v_{-2}$ \Comment{$p \leftarrow -1$}
+  \State 将位于\nvm{N}的数据标记为在下一个检查点生成阶段被撤销
+\Else \Comment{处于检查点生成阶段}
+  \State 交换位于\nvm{P}的数据块$v_{-2}$和位于\nvm{N}的数据块$v_{-1}$ \Comment{$T^B \leftarrow (T^B - T) \cup \{p\}$}
+  \Statex \Comment{$p \leftarrow -1$}
+  \State 在BTT备份（对应于$v_{-1}$）中标记\phy{P}-\nvm{N}为已置换
+  \State 将位于\nvm{N}的数据块标记为在下一个检查点生成阶段被撤销
+\EndIf
+\State 将表项转换至\state{free}态，即撤销该表项 \Comment{$T \leftarrow \{p\}$}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{figure}[!t]
+\centering
+\input{tikz/abstract-state-machine.tikz}
+\caption{State machine of BTT entry for THNVM block remapping scheme.}
+\label{fig:asm}
+\end{figure}
+
+\subsection{证明步骤}
+
+每一个输入的写操作驱动状态机进行一步转换。 因此，我们可以为所有变量添加一个下标$n$，以标示变量值对应于状态机状态转换序列中的哪一步。我们采用数学归纳法的证明基于$n$进行推导。
+
+\textbf{命题}：不变式~\ref{invar-exec}和不变式~\ref{invar-ckpt}可以分别翻译为如下两个命题$P(n)$和$Q(n)$。
+
+在程序执行阶段，我们需要保证$P(n)$一直成立：$$ P(n)=(-1 \in T^B_n) \vee (-1 \notin T^B_n \wedge p_n=-1). $$ 我们假设当前活跃时间单元为0。上式隐含了两个可以接受的情况。第一个是BTT备份包含一个指向块检查点区域的映射（即$-1 \in T^B_n$）。第二个是BTT备份不包含对$v_{-1}$的映射关系（即$-1 \notin T^B_n$）但{\cl}处于主硬件地址（即$p_n=-1$）。只要两个情况任一成立，那么系统故障发生时，从BTT备份中恢复出BTT可使ThyNVM找到地址\phy{P}的正确的{\cl}，即$v_{-1}$。
+
+在检查点生成阶段，我们需要保证$Q(n)$一直成立：$$ Q(n)=(p_n=-2 \wedge -1 \in T^B_n) \vee (p_n=-1 \wedge -2 \in T^B_n). $$ 与$P(n)$类似，$Q(n)$意味着两个正确的情况：BTT备份包含{\cl}（$v_{-1}$）的映射并指向块检查点区域（即$-1 \in T^B_n$），而\cp（$v_{-2}$）位于主硬件地址，依然得到保留（即$p_n=-2$）；或者两个版本所处位置相反的情况——如果主硬件地址保存着{\cl}，那么BTT备份必须记录着{\cp}的位置（即$p_n=-1 \wedge -2 \in T^B_n$）。
+
+综上，我们需要证明如下这个命题：$$S(n)=(\alpha_n \in
+\{\mathbf{w}, \mathbf{r}, \mathbf{c}\} \wedge P(n)) \vee (\alpha_n \in
+\{\mathbf{\hat{w}}, \mathbf{\hat{r}}, \mathbf{f}\} \wedge Q(n))$$
+我们通过区分输入的字母$\alpha_n$来判断处于程序执行阶段还是检查点生成阶段。 $\mathbf{w}、\mathbf{r}$和$\mathbf{c}$在程序执行阶段输入，而其余的在检查点生成阶段出现。
+
+\textbf{归纳基础}：
+在整个系统最初始的状态，我们可以认为所有数据均位于主硬件地址。不妨假设初始步骤前存在虚拟的时间单元-1，那么有$p_0=-1$；另外，由于BTT为空，我们有$T^B_0=\varnothing$。所以，$P(0)$成立。进而，由于处在程序执行阶段，$S(0)$是成立的，值为真。
+
+\noindent\textbf{归纳步骤}：
+假设对任意的$n \ge 1$，$S(n-1)$为真，下面我们论证$S(n)$也为真。
+
+首先，我们统一考虑状态机中所有自循环。对于状态\state{dirty}、\state{pre-dirty}和\state{pre-hidden}，ThyNVM只更新$T_n$，所以$S_n=S_{n-1}$为真。对于状态\state{hidden}，ThyNVM令$p_n=0$，但根据将状态转换至\state{hidden}的过程\ref{alg-hide}，在自循环前即有$p_{n-1}=0$，所以ThyNVM并没有更改该值。所以我们也可以得到$S_n=S_{n-1}$。
+
+其次，我们看两个包含BTT冲刷$\mathbf{f}$的状态转换。
+
+$\state{dirty} \rightarrow \state{clean}$：转换前的状态为\state{dirty}表明$p_{n-1}=-1$。转换后，新的时间单元与检查点生成阶段重合，所以我们有$p_n=-2$\footnote{只有BTT刷出操作会将所有的版本号减一。任何其他过程中，版本号或者保持或者被显式赋值}。另外，ThyNVM将\state{clean}态的映射写入BTT备份，意味着$-1$被加入$T^B_n$。所以，我们有$p_n=-2 \wedge -1 \in T^B_n$，也就是$Q(n)$成立。进而，$S(n)$为真。
+
+$\state{hidden} \rightarrow \state{free}$：转换前的状态是\state{hidden}意味着$p_{n-1}=0$，而在程序执行阶段，$S(n-1) \implies P(n-1)$，所以$-1 \in T^B_{n-1}$必为真。状态转换之后，由于处在新的时间单元，我们有$p_n=-1$以及$-2 \in T^B_n$。所以$Q(n)$为真，进而$S(n)$成立。
+
+除去上述情况，步骤$n$必然经历下面的过程。
+
+过程\ref{alg-dirty}管理着状态转换$\state{free} \rightarrow
+\state{dirty}$和$\state{pre-dirty} \rightarrow \state{dirty}$。不论哪个状态转换，该过程保护$p=-1 \wedge -1 \notin T^B$：转换前，状态\state{free}和\state{pre-dirty}都有$p_{n-1}=-1 \wedge -1 \notin
+T^B_{n-1}$，而该过程避免覆写主硬件地址，所以我们有$p_n=-1$。而且，该过程不刷出表项到BTT备份区域，所以有$-1 \notin T^B_n$。因此，$P(n)$成立。又因为处在程序执行阶段（即$\alpha_n \in \{\mathbf{w}, \mathbf{r}, \mathbf{c}\}$），我们有$S(n-1) \implies S(n)$。
+
+过程\ref{alg-hold}管理着状态转换$\state{clean} \rightarrow
+\state{pre-hidden}$和$\state{free} \rightarrow \state{pre-dirty}$。不论哪个状态转换，该过程将数据写入块缓存区域，而不是更改$p$或$T^B$。这么做的目的是在检查点生成阶段保护$v_{-1}$和$v_{-2}$。因此，不难得出$S(n)=S(n-1)$。
+
+过程\ref{alg-hide}管理着状态转换$\state{clean} \rightarrow
+\state{hidden}$和$\state{pre-hidden} \rightarrow \state{hidden}$。转换前，状态\state{clean} 和\state{pre-hidden}必然处在检查点生成阶段，所以有$p_{n-1}=-2 \wedge -1 \in T^B_{n-1}$ （根据BTT刷出行为和过程\ref{alg-hold}）。在该过程中，ThyNVM设置$p_n=0$但不涉及$T^B$，所以我们有$p_n=0 \wedge -1 \in T^B_n$。又因为处于程序执行阶段，$S(n)$为真。
+
+过程\ref{alg-free-c}管理着状态转换$\state{clean} \rightarrow \state{free}$，但有可能处于程序执行阶段，也可能处于检查点生成阶段。状态转换器前，依据BTT刷出行为我们有
+$P_{n-1}=-2 \wedge -1 \in T^B_{n-1}$，且被$T$引用的最近的版本是$v_{-1}$。如果处于程序执行阶段，该过程设置
+$p_n=-1$，但保持$-1 \in T^B_n$，所以$P(n)$成立。进而，$S(n)$为真。如果处于检查点生成阶段，ThyNVM交换$p$和$T^B$的值，从而导致
+$p_n=-1 \wedge -2 \in T^B_n$。相应地，$Q(n)$成立，且$S(n)$为真。
+
+综上，对于状态机在所有可能的转换中所遵循的路径，恒有$S(n-1)
+\implies S(n)$。考虑到初始步骤0符合$S(0)$，我们可以得出结论$S(n)$对所有的$n \ge 0$成立。也就是说，不变式\ref{invar-ckpt}和\ref{invar-exec}对任何物理地址均成立。
+
+
+%Finally, we explain why the number of \textsc{Block Buffer} slots should be twice
+%the number of BTT entries, even though any particular physical address only
+%requires up to one slot in \textsc{Block Buffer} as shown above. Apparently, we
+%have $\left\vert{T^B}\right\vert \le 1$ for any single physical address served
+%by BTT, and it references up to one \textsc{Block Buffer} slot. However, when
+%there is a \state{free} BTT entry, it may serve a different physical address
+%upon request. This does not affect consistency or recoverability of either
+%address, but requires extra \textsc{Block Buffer} slots as the new address may
+%need a second \textsc{Block Buffer} slot. For example, suppose a BTT entry for
+%\phy{P} shifts from \state{clean} to \state{free} in an execution phase, then we
+%have $-1 \in T^B$ and it references a \textsc{Block Buffer} slot. Afterwards, if we
+%receive a write to another physical address \phy{P'}, we may have to set up a
+%\state{dirty} mapping for \phy{P'} using this \state{free} entry. In that case, $T$ maps
+%to a second slot in \textsc{Block Buffer}.
+%
+%Meanwhile, no matter how many physical addresses the BTT serves, we have at most
+%two versions of full BTT in \textsc{BTT Backup}, so they reference \textsc{Block
+%Buffer} slots of at most twice the number of BTT entries. Further, when
+%\textsc{Block Buffer} slots are occupied by previous versions of data ($v_{-1}$
+%and $v_{-2}$ referenced by \textsc{BTT Backup}), the current version of data
+%($v_0$) will locate in \textsc{Block Cache} via \state{pre-hidden} and
+%\state{pre-dirty}.
+
+\section{页回写模式的正确性证明}
+\label{sec:proof-page-writeback}
+
+为了简便，我们在证明中忽略不重要的部分。首先，我们认为如下\emph{独立的回写模式}的正确性自明：（1）在检查点生成阶段停止一切对内存的修改；（2）将缓存的脏页写入NVM作为检查点，但是不覆写它们之前的版本；（3）原子性地将记录所有检查点页位置的表写入NVM。显然，不变式\ref{invar-ckpt}和\ref{invar-exec}都是成立的。 
+
+对于上述步骤（2），我们重用块重映射模式的状态机来维护故障时数据一致性。特别地，我们只需做如下替换：第一，块重映射协议中的程序执行阶段和检查点生成阶段在这个过程中都被认为是程序执行阶段，所以只有\state{free}、
+\state{dirty}、\state{clean}和\state{hidden}四个状态有效。第二，块检查点区域由页检查点区域代替。第三，所有写变为页粒度，而不再是块粒度。因此，这个过程可以视作之前论证的重映射模式的一个特例，其正确性可以得到保证。
+
+进而，基于上述独立的回写模式的正确性，我们可以得出ThyNVM采用的页回写模式的正确性。当生成脏页的检查点时，块重映射模式会临时负责代理应用程序写往页缓存区域的新的请求，所以ThyNVM的页回写模式与独立的页回写模式等价，当且仅当满足如下两个条件：（1）页缓存区域保存着在生成检查点开始前保存着数据的最新的一致的版本；（2）页缓存区域的这一状态在整个检查点生成阶段得以保持。
+
+第一个条件可以满足，因为在程序执行阶段页缓存区域是直接更新的，而保存在块缓存区域中的数据会在检查点生成阶段前移回页缓存区域（由一个清理操作完成）。第二个条件也成立，因为在检查点生成阶段，应用程序的新的写都被转移到块缓存区域而不会污染页缓存区域。综上，ThyNVM的页回写模式被证明是正确的。
