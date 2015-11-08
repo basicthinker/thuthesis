@@ -37,13 +37,13 @@ ThyNVM使用两个地址转换表，\emph{块转换表}（BTT）和\emph{页转�
 \section{地址转换状态机}
 \label{subsec:thynvm-state-machin}
 
-我们使用一个状态机来决定一个内存写请求应当访问的位置，即将内存写请求的物理地址转换成一个合适的硬件地址。除了保存这个从物理地址到硬件地址的映射，每个BTT表项同时保存着7个状态之一，该状态驱动着块重映射模式的控制流。PTT重用与该状态机相同的逻辑，但只需要这些状态中的4个。下面我们聚焦于描述BTT的行为，而后讨论PTT如何适配到这个状态机的一个子集。图~\ref{fig-state-machine}描绘了状态机的全貌。为了清楚地展示，我们将状态分组而后逐组进行介绍。
+我们使用一个状态机来决定一个内存写请求应当访问的位置，即将内存写请求的物理地址转换成一个合适的硬件地址。除了保存这个从物理地址到硬件地址的映射，每个BTT表项同时保存着7个状态之一，该状态驱动着块重映射模式的控制流。PTT重用与该状态机相同的逻辑，但只需要这些状态中的4个。下面我们聚焦于描述BTT的行为，而后讨论PTT如何适配到这个状态机的一个子集。图~\ref{fig:thynvm-state-machine}描绘了状态机的全貌。为了清楚地展示，我们将状态分组而后逐组进行介绍。
 
 \begin{figure}[!t]
 \centering
 \input{tikz/state-machine.tikz}
 \caption{在块重映射模式下，一个BTT表项的状态。每个内存写（“write”）后注明“exec.”或“ckpt.”，分别意味着该内存写到来的时间在程序执行阶段（无检查点生成）或在检查点生成阶段；“write'”指原本应到页缓存的写。}
-\label{fig-state-machine}
+\label{fig:thynvm-state-machine}
 \end{figure}
 
 \subsection{执行时的状态}
@@ -74,7 +74,7 @@ ThyNVM使用两个地址转换表，\emph{块转换表}（BTT）和\emph{页转�
 \noindent\ding{202} 初始状态，我们假设在物理地址P的数据位于其主硬件地址（家区域），所以在BTT中没有对应的表项，且不占用块检查点区域或块缓存区域的位置。P位置的数据可以认为是最近检查点的版本（标记为$v_{-1}$，即$v_0$之前的一个版本）。
 
 \vspace{\noindentsep}
-\noindent\ding{203} 在执行时间单元0的过程中，当一个对物理地址P的内存写到达时，我们不能覆写家区域中的检查点数据$v_{-1}$。所以，一个新的映射P-N被添加到BTT中，将数据$v_0$导向块检查点区域中的硬件地址N。我们将该表项标记为\state{dirty}态（图~\ref{fig-state-machine}中的状态转换\circled{$\mathnormal{1}$}）以表明该物理地址在当前活跃时间单元内已经被更改过。这个时间单元内后续的任意对物理地址P的内存写都可以合并在硬件地址N。
+\noindent\ding{203} 在执行时间单元0的过程中，当一个对物理地址P的内存写到达时，我们不能覆写家区域中的检查点数据$v_{-1}$。所以，一个新的映射P-N被添加到BTT中，将数据$v_0$导向块检查点区域中的硬件地址N。我们将该表项标记为\state{dirty}态（图~\ref{fig:thynvm-state-machine}中的状态转换\circled{$\mathnormal{1}$}）以表明该物理地址在当前活跃时间单元内已经被更改过。这个时间单元内后续的任意对物理地址P的内存写都可以合并在硬件地址N。
 
 \vspace{\noindentsep}
 \noindent\ding{204} 在时间单元0之后，上述\state{dirty}表项被冲刷到BTT/PTT/CPU备份区域。该表项在BTT中的状态变为\state{clean}（状态转换\circled{$\mathnormal{2}$}）以表明该映射已经持久化且在新的时间单元1中尚无对该物理地址的写。
@@ -218,7 +218,7 @@ $T=\varnothing$，此时可认为\phy{P}的状态为\state{free}；否则，我�
 \begin{figure}[!t]
 \centering
 \input{tikz/abstract-state-machine.tikz}
-\caption{State machine of BTT entry for THNVM block remapping scheme.}
+\caption{BTT表项的状态机的抽象描述，用于实现块重映射模式。}
 \label{fig:asm}
 \end{figure}
 

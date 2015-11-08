@@ -1,0 +1,49 @@
+\begin{tikzpicture}[->, >=stealth, node distance=0.38\tikzdistance, auto, thick,
+font=\footnotesize]
+
+\tikzstyle{every state}=[ellipse, inner sep=1pt]
+
+\node[state] (h) {\state{hidden}};
+\node[state] (f) [right=of h] {\state{free}};
+\node[state] (c) [above=of h] {\state{clean}};
+\node[state] (t) [below left=of c] {\state{pre-hidden}};
+\node[state] (d) [above=of f] {\state{dirty}};
+\node[state] (s) [above right=of f] {\state{pre-dirty}};
+
+\path (c.west)
+  edge [bend right, anchor=south]
+    node [xshift=-0.18\tikzdistance]
+      {\trans{\mathbf{\hat{w}}}{Procedure~\ref{alg-hold}}} (t);
+\path (c)
+  edge [bend right, anchor=base]
+    node {\trans{\mathbf{w}}{Procedure~\ref{alg-hide}}} (h)
+  edge [anchor=base] node {\trans{\mathbf{r, \hat{r}}}{Procedure~\ref{alg-free-c}}} (f);
+\path (h)
+  edge [anchor=south] node {$\mathbf{f}$} (f)
+  edge [loop, out=330, in=270, anchor=north, looseness=4]
+    node {$\mathbf{w}$} (h);
+\path (t)
+  edge [bend right, out=300, in=240, anchor=north]
+    node {\trans{\mathbf{w, c}}{Procedure~\ref{alg-hide}}} (h)
+  edge [loop, out=210, in=150, looseness=4, anchor=south]
+    node [xshift=0.1\tikzdistance, yshift=0.15\tikzdistance]
+      {$\mathbf{\hat{w}}$} (t);
+\path (f)
+  edge [bend right, anchor=base]
+    node {\trans{\mathbf{w}}{Procedure~\ref{alg-dirty}}} (d)
+  edge [bend right, anchor=west]
+    node {\trans{\mathbf{\hat{w}}}{Procedure~\ref{alg-hold}}} (s);
+\path (s)
+  edge [bend right, anchor=south]
+    node [xshift=0.15\tikzdistance]
+      {\trans{\mathbf{w, c}}{Procedure~\ref{alg-dirty}}} (d)
+  edge [loop, out=330, in=30, anchor=south, looseness=4]
+    node [xshift=-0.12\tikzdistance, yshift=0.15\tikzdistance]
+      {$\mathbf{\hat{w}}$} (s);
+\path (d)
+  edge node [anchor=south] {$\mathbf{f}$} (c)
+  edge [loop, out=60, in=120, looseness=4, anchor=south]
+    node {$\mathbf{w}$} (d);
+
+\end{tikzpicture}
+
