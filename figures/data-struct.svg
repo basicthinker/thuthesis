@@ -284,11 +284,13 @@
          sodipodi:role="line"
          id="tspan2991"
          x="68.027939"
-         y="142.9841">CPU回写</tspan><tspan
+         y="142.9841"
+         style="font-weight:normal;-inkscape-font-specification:Sans Italic">CPU回写</tspan><tspan
          sodipodi:role="line"
          x="68.027939"
          y="157.9841"
-         id="tspan3122">（来源包括缓存置换以及时间单元结束）</tspan></text>
+         id="tspan3122"
+         style="font-weight:normal;-inkscape-font-specification:Sans Italic">（来源包括缓存置换以及时间单元结束）</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
