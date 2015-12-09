@@ -93,14 +93,33 @@
 
 \begin{eabstract}
 
-Non-volatile memories (NVMs), such as flash, phase-change memory (PCM) and ReRAM, feature both the persistence property of external storage and the high performance of internal memory. They promise persistent memory, an emerging tier in the traditional memory and storage stack.
+Non-volatile memories (NVMs), such as flash, phase-change memory (PCM) and
+ReRAM, feature both the persistence of external storage and the high
+performance of internal memory. They promise persistent memory, an emerging
+tier in the traditional memory and storage stack.
 
-Persistent memory systems ensure durability of memory data on system failures such as power outages and system crashes. This distinctive feature can reduce the overhead of traditional data persistence mechanisms, but introduces the critical challenge of supporting crash consistency of memory data. In order to guarantee such consistency, programs are typically limited in accessing memory data by a certain form of access interfaces. The interface choice and its corresponding consistency mechanism determine the tradeoff between programming ease and system performance.
+Persistent memory systems ensure durability of memory data on system failures
+such as power outages and system crashes. This distinctive feature can reduce
+the overhead of traditional data persistence mechanisms, but introduces a
+critical challenge: crash consistency of memory data. In order to guarantee
+such consistency, programs are typically constrained in accessing memory data
+by a certain form of software interfaces. The interface choice and its
+corresponding crash consistency mechanism determine the tradeoff between ease
+of programming and system performance.
 
-This dissertation present my research on efficient mechanisms for supporting crash consistency in persistent memory systems, under three main forms of interfaces, file system, transactional memory, and the software-transparent. The main contributions of this dissertation include the following.
+This dissertation presents my research on efficient mechanisms for supporting
+crash consistency in persistent memory systems, under three main forms of
+interfaces, file system, transactional memory, and a software-transparent
+approach.  The main contributions of this dissertation include the following.
 
 \begin{itemize}
-\item For file systems, we introduce atomic transactions to the page cache of operating systems to ensure that memory data is flushed to persistent storage in a consistent manner. This technique is applied to smartphones whose DRAM and flash can be assumed as a persistent memory system. In order to optimize energy efficiency and app responsiveness, we design app-adaptive policies and algorithms to quantatively trade off between data staleness and energy efficiency/app responsiveness.
+\item For file systems, we introduce atomic transactions to the page cache of
+operating systems to ensure that memory data is flushed to persistent storage
+in a consistent manner. This technique is applied to smartphones whose DRAM and
+flash can be assumed to be a persistent memory system. In order to optimize the
+energy efficiency and app responsiveness of smartphones, we design app-adaptive
+policies and algorithms to quantitatively trade off between data staleness and
+energy efficiency/app responsiveness.
 
 \item For transactional memories, we propose a new buffering and group commit design, the small buffer array, according to the characteristics of (potentially NVRAM-enhanced) NVM Express-attached SSD. It largely reduces the waiting latency in group commit, while saturating the bandwidth of the flash device. Moreover, we employ snapshot isolation to hide write latency from the critical path of read-only transactions, which brings significant performance improvement to real-time analytical workloads.
 
