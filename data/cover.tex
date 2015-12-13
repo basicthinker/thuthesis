@@ -94,38 +94,58 @@
 \begin{eabstract}
 
 Non-volatile memories (NVMs), such as flash, phase-change memory (PCM) and
-ReRAM, feature both the persistence of external storage and the high
-performance of internal memory. They promise persistent memory, an emerging
-tier in the traditional memory and storage stack.
+ReRAM, feature both the persistence capability of external storage and the high
+performance of internal memory. They promise \emph{persistent memory}, an
+emerging tier in the memory and storage stack. Persistent memory has the
+potential to significantly increase the efficiency of the current system
+architecture.
 
 Persistent memory systems ensure durability of memory data on system failures
-such as power outages and system crashes. This distinctive feature can reduce
-the overhead of traditional data persistence mechanisms, but introduces a
-critical challenge: crash consistency of memory data. In order to guarantee
-such consistency, programs are typically constrained in accessing memory data
-by a certain form of software interfaces. The interface choice and its
-corresponding crash consistency mechanism determine the tradeoff between ease
-of programming and system performance.
+such as power outages and system crashes. This distinctive feature can save
+overheads of traditional data persistence mechanisms, but introduces a critical
+challenge: crash consistency of memory data. In order to guarantee such crash
+consistency, programs are typically constrained in accessing memory data by a
+certain form of software interface. The interface choice and its corresponding
+crash consistency mechanism largely determine the system performance and the
+ease of programming.
 
 This dissertation presents my research on efficient mechanisms for supporting
 crash consistency in persistent memory systems, under three main forms of
-interfaces, file system, transactional memory, and a software-transparent
-approach.  The main contributions of this dissertation include the following.
+interfaces: file system, transactional memory, and the software-transparent
+interface.  Main contributions of this dissertation include the following.
 
 \begin{itemize}
-\item For file systems, we introduce atomic transactions to the page cache of
-operating systems to ensure that memory data is flushed to persistent storage
-in a consistent manner. This technique is applied to smartphones whose DRAM and
-flash can be assumed to be a persistent memory system. In order to optimize the
-energy efficiency and app responsiveness of smartphones, we design app-adaptive
-policies and algorithms to quantitatively trade off between data staleness and
-energy efficiency/app responsiveness.
+\item For file systems, we introduce \emph{atomic transactions} to the page
+cache of an operating system to ensure that memory data is flushed to
+persistent storage in a consistent manner. This technique is applied to
+smartphones whose DRAM and flash can be deemed as a persistent memory system.
+In order to optimize the energy efficiency and app responsiveness of
+smartphones, we design app/user-adaptive policies and algorithms to
+quantitatively trade off data staleness for energy efficiency/app
+responsiveness.
 
-\item For transactional memories, we propose a new buffering and group commit design, the small buffer array, according to the characteristics of (potentially NVRAM-enhanced) NVM Express-attached SSD. It largely reduces the waiting latency in group commit, while saturating the bandwidth of the flash device. Moreover, we employ snapshot isolation to hide write latency from the critical path of read-only transactions, which brings significant performance improvement to real-time analytical workloads.
+\item For transactional memories, we propose a new buffering and group commit
+design, \emph{small buffer array}, according to the characteristics of
+(potentially NVRAM-enhanced) NVM Express-attached SSD. It largely reduces the
+waiting latency in group commit, while saturating the bandwidth of the flash
+device. Moreover, we employ \emph{snapshot isolation} to hide write latency
+from the critical path of read-only transactions, which brings significant
+performance improvement to real-time analytical workloads.
 
-\item With software-transparent interfaces, programs can safely access memory data using regular load/store instructions. Programmers do not need bother partitioning transient and persistent data or writing transactional code, and enjoy better portability than using particular transaction libraries. To enable this approach, we propose a highly efficient consistent dual-scheme checkpointing mechanism which synchronously checkpoints memory data at different granularities.
+\item With software-transparent interfaces, programs can safely access memory
+data using regular load/store instructions. Programmers do not need bother
+partitioning transient and persistent data or writing transactional code, but
+enjoy unmodified legacy code and better portability than using a particular
+transaction library. We establish the importance of this
+\emph{software-transparent} approach and, to enable the approach, propose an
+efficient consistent \emph{dual-scheme checkpointing} mechanism which
+synchronously checkpoints memory data at different granularities.
 
-\item Dual-scheme checkpointing brings a new challenge to the crash consistency guarantee: the isolation and maintenance of multiple versions of data are largely complicated by the overlap of program execution and checkpointing. We propose to use a state machine to model the consistency protocol, and formally prove the correctness of the protocol.
+\item Dual-scheme checkpointing brings a new challenge to the crash consistency
+guarantee: the isolation and maintenance of multiple versions of data are
+complicated by the overlap of program execution and checkpointing. We propose
+to use a state machine to model the consistency protocol, and formally prove
+the correctness of the protocol.
 
 \end{itemize}
 
