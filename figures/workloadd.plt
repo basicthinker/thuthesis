@@ -1,4 +1,4 @@
-set terminal pdfcairo enhanced color dashed font "Times New Roman,16" size 5,3.5
+set terminal pdfcairo enhanced color dashed font "Times New Roman,16" size 5,2.5
 
 set output "workloadd.pdf"
 set style data lines

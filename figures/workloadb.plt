@@ -1,4 +1,4 @@
-set terminal pdfcairo enhanced color dashed font "Times New Roman,16" size 5,3.5
+set terminal pdfcairo enhanced color dashed font "Times New Roman,16" size 5,2.5
 set output "workloadb.pdf"
 set style data lines
 set ylabel '事务吞吐率（KTPS）'
